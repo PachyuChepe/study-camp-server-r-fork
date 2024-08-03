@@ -13,18 +13,24 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      ignoreExpiration: true, // 만료된 토큰도 허용
+      ignoreExpiration: false, // 만료된 토큰을 허용하지 않음
       secretOrKey: configService.get('JWT_SECRET_KEY'),
     });
   }
 
   async validate(payload: any) {
     const user = await this.userService.findOne(payload.email);
+
     if (!user) {
       throw new UnauthorizedException('로그인이 필요합니다.');
     }
 
-    // 토큰 만료 시간 추가
-    return { ...user, exp: payload.exp };
+    // 현재 시간과 비교하여 토큰이 만료되었는지 확인
+    const currentTime = Math.floor(Date.now() / 1000); // 현재 시간을 초 단위로 변환
+    if (payload.exp < currentTime) {
+      throw new UnauthorizedException('토큰이 만료되었습니다.');
+    }
+
+    return { ...user, exp: payload.exp }; // 사용자와 만료 시간을 반환
   }
 }

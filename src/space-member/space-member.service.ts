@@ -22,9 +22,6 @@ export class SpaceMemberService {
   async create(userId: number, spaceId: number): Promise<SpaceMember> {
     try {
       const exMember = await this.findExistSpaceMember(userId, spaceId);
-      // await this.spaceMemberRepository.findOne({
-      //   where: { user_id: userId, space_id: spaceId },
-      // });
 
       if (exMember) {
         throw new BadRequestException('이미 스페이스 멤버입니다.');
@@ -37,26 +34,24 @@ export class SpaceMemberService {
       newMember = await this.spaceMemberRepository.save(newMember);
 
       return newMember;
-      // return {
-      //   code: 201,
-      //   message: 'This action adds a new spaceMember',
-      //   newMember,
-      // };
     } catch (error) {
-      throw new InternalServerErrorException('서버 오류 발생');
+      throw new InternalServerErrorException('서버 오류 발생 create member');
     }
   }
 
-  async findAllBySpace(spaceId: number) {
+  async findAllMemberSpaceByUserId(userId: number) {
     try {
       const members = await this.spaceMemberRepository.find({
-        where: { space_id: spaceId },
+        where: { user_id: userId },
+        relations: ['space'],
       });
 
+      if (!members || members.length == 0) {
+        return null;
+      }
+
       return members.map((member) => ({
-        id: member.id,
-        user_id: member.user_id,
-        nick_name: member.user.nick_name,
+        space_id: member.space_id,
       }));
     } catch (error) {
       throw new InternalServerErrorException('서버 오류 발생');
@@ -92,10 +87,6 @@ export class SpaceMemberService {
       throw new ConflictException('서버 에러');
     }
   }
-
-  // update(id: number, updateSpaceMemberDto: UpdateSpaceMemberDto) {
-  //   return `This action updates a #${id} spaceMember`;
-  // }
 
   async remove(id: number) {
     try {

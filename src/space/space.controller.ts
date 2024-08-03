@@ -16,6 +16,7 @@ import { CreateSpaceDto } from './dto/create-space.dto';
 import { UpdateSpaceDto } from './dto/update-space.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
+import { GuestAuthGuard } from 'src/auth/guard/guest-auth.guard';
 
 @Controller('space')
 export class SpaceController {
@@ -25,13 +26,13 @@ export class SpaceController {
   @Post()
   @UsePipes(ValidationPipe)
   async createSpace(@Req() req, @Body() createSpaceDto: CreateSpaceDto) {
-    // 요청 객체에서 사용자 ID 추출
     const userId = req.user.id;
 
     return await this.spaceService.createSpace(
       createSpaceDto.name,
       createSpaceDto.content,
       createSpaceDto.password,
+      createSpaceDto.image_url,
       userId,
     );
   }
@@ -42,40 +43,32 @@ export class SpaceController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.spaceService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    return await this.spaceService.findOne(+id);
   }
 
-  @Get()
-  async findMemberSpaces(@Req() req) {
-    return await this.spaceService.findSpacesByMember(req.user.id);
-  }
-
-  @Get('/:spaceId')
-  async getAllMemberBySpaceId(@Param('spaceId') spaceId: number) {
-    const result: any = await this.spaceService.getAllMemberBySpaceId(spaceId);
-    result.spaceMembers.forEach((spaceMember) => {
-      spaceMember.user = {
-        id: spaceMember.user.id,
-        nick_name: spaceMember.user.nick_name,
-      };
-    });
-    return result;
+  @Get(':id/members')
+  async findMembers(@Param('id') id: string) {
+    return await this.spaceService.findMemebers(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSpaceDto: UpdateSpaceDto) {
-    return this.spaceService.update(+id, updateSpaceDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateSpaceDto: UpdateSpaceDto,
+  ) {
+    return await this.spaceService.update(+id, updateSpaceDto);
   }
 
   @UseGuards(AuthGuard('jwt'), JwtAuthGuard)
   @Delete(':id')
-  remove(@Param('id') id: string, @Req() req) {
+  async remove(@Param('id') id: string, @Req() req) {
     const userId = req.user.id;
-    return this.spaceService.remove(+id, userId);
+    return await this.spaceService.remove(+id, userId);
   }
 
   // 초대 코드 생성
+  @UseGuards(AuthGuard('jwt'), JwtAuthGuard)
   @Get('/invitation/:spaceId')
   async createInvitngCode(@Param('spaceId') spaceId: string, @Req() req) {
     const data = await this.spaceService.createInvitngCode(
@@ -86,20 +79,19 @@ export class SpaceController {
   }
 
   // 초대 코드 검증
+  @UseGuards(AuthGuard('jwt'), JwtAuthGuard)
   @Post('/invitation/check')
   async checkInvitingCode(@Body('code') code: string, @Req() req) {
     return await this.spaceService.checkInvitingCode(req.user.id, code);
   }
 
-  // 스페이스 비밀번호 검증
+  @UseGuards(AuthGuard('jwt'), GuestAuthGuard)
   @Post('/enter')
-  async checkInvitingPassword(@Body() body, @Req() req) {
+  async enterSpace(@Body() body, @Req() req) {
     const spaceId = body.spaceId;
     const password = body.password;
-    return await this.spaceService.checkPassword(
-      req.user.id,
-      spaceId,
-      password,
-    );
+    // 로그인 상태 확인
+    const userId = req.user ? req.user.id : 0;
+    return await this.spaceService.checkPassword(userId, spaceId, password);
   }
 }

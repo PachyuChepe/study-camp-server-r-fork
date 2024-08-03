@@ -1,0 +1,86 @@
+@domain = http://localhost:4000
+@AccessToken = {{loginToken.response.body.$.access_token}}
+
+###
+# 사용자 로그인
+# @name loginToken
+POST {{domain}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@gmail.com",
+  "password": "1234"
+}
+
+###
+# 로그아웃
+POST {{domain}}/auth/logout
+Content-Type: application/json
+Authorization: Bearer {{AccessToken}}
+
+###
+# 학습공간 생성하기 
+POST {{domain}}/space
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+{
+  "name": "test1",
+  "content": "",
+  "password": "",
+  "image_url" : ""
+}
+
+###
+# 학습공간 조회하기
+GET {{domain}}/space/1
+Authorization: Bearer {{AccessToken}}
+
+### 
+# 학습공간 삭제
+DELETE {{domain}}/space/1
+Authorization: Bearer {{AccessToken}}
+
+###
+# 모든 학습공간 조회하기
+GET {{domain}}/space
+Authorization: Bearer {{AccessToken}}
+
+###
+# 학습공간 멤버 조회
+GET {{domain}}/space/1/members
+Authorization: Bearer {{AccessToken}}
+
+
+
+###
+# 로그인유저가 참여한 학습공간
+GET {{domain}}/space-member/user
+Authorization: Bearer {{AccessToken}}
+
+###
+# 학습공간 입장
+POST  {{domain}}/space/enter
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+{
+  "spaceId": "2",
+  "password": ""
+}
+
+
+###
+# 초대 코드 생성
+GET {{domain}}/space/invitation/2
+Authorization: Bearer {{AccessToken}}
+
+###
+# 초대 코드 검증
+POST  {{domain}}/space/invitation/check
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+{
+  "code": "1GO3X3"
+}

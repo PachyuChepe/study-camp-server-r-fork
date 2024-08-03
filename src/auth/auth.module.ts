@@ -11,8 +11,10 @@ import { AuthService } from './auth.service';
 import { LocalAuthGuard } from './guard/local-auth.guard';
 import { JwtStrategy } from './strategy/jwt.strategy';
 import { LocalStrategy } from './strategy/local.strategy';
-import { GoogleStrategy } from './strategy/google.strategy';
+// import { GoogleStrategy } from './strategy/google.strategy';
 import { SpaceModule } from 'src/space/space.module';
+import { JwtAuthGuard } from './guard/jwt-auth.guard';
+import { GuestAuthGuard } from './guard/guest-auth.guard';
 
 @Module({
   imports: [
@@ -32,9 +34,11 @@ import { SpaceModule } from 'src/space/space.module';
   providers: [
     AuthService,
     JwtStrategy,
+    JwtAuthGuard,
     LocalStrategy,
     LocalAuthGuard,
-    GoogleStrategy,
+    GuestAuthGuard,
+    // GoogleStrategy,
   ],
   controllers: [AuthController],
   exports: [AuthService],

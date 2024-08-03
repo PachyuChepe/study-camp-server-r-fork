@@ -12,6 +12,7 @@ import { SpaceMemberModule } from './space-member/space-member.module';
 import { User } from './user/entities/user.entity';
 import { Space } from './space/entities/space.entity';
 import { SpaceMember } from './space-member/entities/space-member.entity';
+import { AuthModule } from './auth/auth.module';
 
 const typeOrmModuleOptions = {
   useFactory: async (
@@ -45,6 +46,7 @@ const typeOrmModuleOptions = {
       }),
     }),
     TypeOrmModule.forRootAsync(typeOrmModuleOptions),
+    AuthModule,
     UserModule,
     SpaceModule,
     SpaceMemberModule,

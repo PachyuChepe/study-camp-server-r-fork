@@ -1,0 +1,63 @@
+@domain = http://localhost:4000
+@AccessToken = {{loginToken.response.body.$.access_token}}
+
+###
+# 연결 테스트
+Get http://127.0.0.1:4000/ HTTP/1.1
+Content-Type: application/json
+
+###
+# 사용자 회원가입
+POST {{domain}}/user
+Content-Type: application/json
+
+{
+  "email": "user2@gmail.com",
+  "password": "1234",
+  "passwordConfirm": "1234",
+  "nick_name": "닉네임"
+}
+
+###
+# 사용자 로그인
+# @name loginToken
+POST {{domain}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user2@gmail.com",
+  "password": "1234"
+}
+
+###
+# 모든 사용자 정보 조회
+GET {{domain}}/user
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+###
+# 로그인한 사용자 정보 조회
+GET {{domain}}/user/profile
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+###
+# 사용자 정보 업데이트
+PATCH {{domain}}/user
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+{
+  "password": "123qweQWE!",
+  "hair": 2,
+  "face": 3,
+  "clothes": 4,
+  "hair_color": 5,
+  "clothes_color": 6
+}
+
+### 
+# 사용자 삭제
+DELETE {{domain}}/user
+Content-Type: application/json
+Authorization: Bearer {{AccessToken}}

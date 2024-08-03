@@ -9,7 +9,6 @@ import {
 import { CreateSpaceDto } from './dto/create-space.dto';
 import { UpdateSpaceDto } from './dto/update-space.dto';
 import { Space } from './entities/space.entity';
-import { SpaceMember } from '../space-member/entities/space-member.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SpaceMemberService } from 'src/space-member/space-member.service';
@@ -18,11 +17,8 @@ import { RedisService } from 'src/redis/redis.service';
 @Injectable()
 export class SpaceService {
   constructor(
-    @InjectRepository(Space) private spacesRepository: Repository<Space>,
+    @InjectRepository(Space) private spaceRepository: Repository<Space>,
     private spaceMemberService: SpaceMemberService,
-
-    @InjectRepository(SpaceMember)
-    private spaceMemberRepository: Repository<SpaceMember>,
 
     private redisService: RedisService,
   ) {}
@@ -31,6 +27,7 @@ export class SpaceService {
     name: string,
     content: string,
     password: string,
+    image_url: string,
     userId: number,
   ) {
     try {
@@ -39,32 +36,37 @@ export class SpaceService {
         throw new BadRequestException('해당하는 방이 이미 존재합니다.');
       }
 
-      let newSpace = this.spacesRepository.create({
-        name: name,
-        content: content,
-        password: password,
+      let newSpace = this.spaceRepository.create({
+        name,
+        content,
+        password,
+        image_url,
         user_id: userId,
       });
-      newSpace = await this.spacesRepository.save(newSpace);
+      newSpace = await this.spaceRepository.save(newSpace);
 
       // 스페이스 멤버 등록
       await this.spaceMemberService.create(newSpace.user_id, newSpace.id);
 
       return { code: 201, message: 'You succesfully make a space', newSpace };
     } catch (error) {
-      throw new InternalServerErrorException('서버 오류 발생');
+      throw new InternalServerErrorException('서버 오류 발생 createSpace');
     }
   }
 
   async findAll() {
     try {
-      const spaces = await this.spacesRepository.find({
+      const spaces = await this.spaceRepository.find({
         select: ['id', 'user_id', 'content', 'name', 'image_url'],
         relations: ['spaceMembers'],
       });
 
       return spaces.map((space) => ({
-        ...space,
+        id: space.id,
+        user_id: space.user_id,
+        name: space.name,
+        content: space.content,
+        image_url: space.image_url,
         membersCount: space.spaceMembers.length,
       }));
     } catch (error) {
@@ -72,55 +74,78 @@ export class SpaceService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} space`;
+  async findOne(id: number) {
+    try {
+      const result = await this.spaceRepository.findOne({
+        where: { id },
+        select: ['id', 'user_id', 'content', 'name', 'image_url'],
+        relations: ['spaceMembers'],
+      });
+
+      if (!result) {
+        return null;
+      }
+
+      const membersCount = result ? result.spaceMembers.length : 0;
+      return {
+        id: result.id,
+        user_id: result.user_id,
+        name: result.name,
+        content: result.content,
+        image_url: result.image_url,
+        membersCount,
+      };
+    } catch (error) {
+      console.error('Error in findOne:', error); // 에러 로그 출력
+      throw new ConflictException('서버 에러 findOne');
+    }
+  }
+
+  async findMemebers(id: number) {
+    try {
+      const result = await this.spaceRepository.findOne({
+        where: { id },
+        select: ['id', 'user_id', 'content', 'name', 'image_url'],
+        relations: ['spaceMembers'],
+      });
+
+      if (!result) {
+        return [];
+      }
+
+      const spaceMembers = result.spaceMembers.map((member) => ({
+        id: member.id,
+        user_id: member.user_id,
+      }));
+      return spaceMembers;
+    } catch (error) {
+      console.error('Error in findOne:', error); // 에러 로그 출력
+      throw new ConflictException('서버 에러 findOne');
+    }
   }
 
   private async findSpaceByName(name: string): Promise<any> {
     try {
-      const result = await this.spacesRepository.findOne({
+      const result = await this.spaceRepository.findOne({
         where: { name },
         select: ['id', 'user_id', 'content', 'name', 'image_url'],
         relations: ['spaceMembers'],
       });
 
-      const membersCount = result.spaceMembers.length;
-      return { ...result, membersCount };
+      if (!result) {
+        return null;
+      }
+      const membersCount = result ? result.spaceMembers.length : 0;
+      return {
+        id: result.id,
+        user_id: result.user_id,
+        name: result.name,
+        content: result.content,
+        image_url: result.image_url,
+        membersCount,
+      };
     } catch (error) {
-      throw new ConflictException('서버 에러');
-    }
-  }
-
-  async getAllMemberBySpaceId(spaceId: number) {
-    try {
-      const result = await this.spacesRepository.findOne({
-        where: { id: spaceId },
-        relations: ['spaceMembers', 'spaceMembers.user'],
-      });
-      return result;
-    } catch (error) {
-      throw new InternalServerErrorException('서버 오류 발생');
-    }
-  }
-  // 사용자가 멤버로 있는 스페이스 조회
-  async findSpacesByMember(userId: number): Promise<any> {
-    try {
-      const memberSpaces = await this.spaceMemberRepository.find({
-        where: { user_id: userId },
-        relations: ['space'],
-      });
-
-      // 각 스페이스와 해당 스페이스에서의 사용자 역할을 포함한 객체 반환
-      return memberSpaces.map((member) => ({
-        id: member.space.id,
-        name: member.space.name,
-        user_id: member.space.user_id,
-        image_url: member.space.image_url,
-        content: member.space.content,
-        membersCount: member.space.spaceMembers.length,
-      }));
-    } catch (error) {
-      throw new InternalServerErrorException('서버 오류 발생');
+      throw new ConflictException('서버 에러 findSpaceByName');
     }
   }
 
@@ -130,7 +155,7 @@ export class SpaceService {
 
   async remove(id: number, userId: number) {
     try {
-      const exSpace = await this.spacesRepository.findOne({
+      const exSpace = await this.spaceRepository.findOne({
         where: { id: id, user_id: userId },
       });
       if (!exSpace) {
@@ -138,7 +163,7 @@ export class SpaceService {
           '해당하는 스페이스가 없거나 접근 권한이 없습니다.',
         );
       }
-      await this.spacesRepository.delete({ id });
+      await this.spaceRepository.delete({ id });
       return { code: 200, message: 'You successfully delete the space' };
     } catch (error) {
       throw error;
@@ -146,89 +171,95 @@ export class SpaceService {
   }
   // 초대 코드 생성
   async createInvitngCode(spaceId: number, userId: number) {
-    // const isSpaceMember = await this.spaceMemberRepository.findOne({
-    //   where: { space_id: spaceId, user_id: userId },
-    // });
+    try {
+      const numbers = '0123456789';
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let result = '';
 
-    // if (isSpaceMember.role !== SpaceMemberRole.Admin) {
-    //   throw new UnauthorizedException('권한이 없습니다.');
-    // }
+      for (let i = 0; i < 3; i++) {
+        result += numbers.charAt(Math.floor(Math.random() * numbers.length));
+      }
 
-    const numbers = '0123456789';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    let result = '';
+      for (let i = 3; i < 6; i++) {
+        result += characters.charAt(
+          Math.floor(Math.random() * characters.length),
+        );
+      }
 
-    for (let i = 0; i < 3; i++) {
-      result += numbers.charAt(Math.floor(Math.random() * numbers.length));
+      result = result
+        .split('')
+        .sort(() => {
+          return 0.5 - Math.random();
+        })
+        .join('');
+
+      await this.redisService.saveInvitingCode(spaceId, result);
+      return result;
+    } catch (error) {
+      throw error;
     }
-
-    for (let i = 3; i < 6; i++) {
-      result += characters.charAt(
-        Math.floor(Math.random() * characters.length),
-      );
-    }
-
-    result = result
-      .split('')
-      .sort(() => {
-        return 0.5 - Math.random();
-      })
-      .join('');
-
-    await this.redisService.saveInvitingCode(spaceId, result);
-    return result;
   }
 
   // 초대 코드 검증
   async checkInvitingCode(userId: number, code: string) {
-    const spaceId = await this.redisService.getInvitingCode(code);
+    try {
+      const spaceId = await this.redisService.getInvitingCode(code);
 
-    const space = await this.spacesRepository.findOne({
-      where: { id: +spaceId },
-      relations: ['spaceMembers'],
-    });
+      const space = await this.spaceRepository.findOne({
+        where: { id: +spaceId },
+        relations: ['spaceMembers'],
+      });
 
-    let member = await this.spaceMemberService.findExistSpaceMember(
-      userId,
-      +spaceId,
-    );
-    if (!member) {
-      // 스페이스 멤버 등록
-      member = await this.spaceMemberService.create(userId, +spaceId);
+      let member = await this.spaceMemberService.findExistSpaceMember(
+        userId,
+        +spaceId,
+      );
+      if (!member) {
+        // 스페이스 멤버 등록
+        member = await this.spaceMemberService.create(userId, +spaceId);
+      }
+
+      return member;
+    } catch (error) {
+      throw error;
     }
-
-    return member;
   }
 
   // 비밀번호 입장 검증
   async checkPassword(userId: number, spaceId: number, password: string) {
-    const space = await this.spacesRepository.findOne({
-      where: { id: spaceId },
-    });
-    if (space.password !== password) {
-      throw new BadRequestException('비밀번호가 일치하지 않습니다.');
+    try {
+      // 유저가 이미 멤버이면 입장
+      if (userId != null) {
+        let member = await this.spaceMemberService.findExistSpaceMember(
+          +userId,
+          +spaceId,
+        );
+        return { user_id: userId, member_id: member.id };
+      }
+
+      const space = await this.spaceRepository.findOne({
+        where: { id: spaceId },
+      });
+      if (!space) {
+        throw new NotFoundException('해당 스페이스가 없음');
+      }
+
+      if (space.password == password) {
+        if (userId != null) {
+          let member = await this.spaceMemberService.create(userId, +spaceId);
+
+          return { user_id: userId, member_id: member.id };
+        } else {
+          return { user_id: null, member_id: null };
+        }
+        return true;
+      } else {
+        throw new BadRequestException('비밀번호가 맞지 않습니다.');
+      }
+
+      return false;
+    } catch (error) {
+      throw new ConflictException('서버 에러 checkPassword');
     }
-
-    // // 해당 스페이스의 멤버인지 확인
-    // const checkUserInSpace = await this.spacesRepository.findOne({
-    //   where: { id: spaceId, user_id: userId },
-    // });
-
-    // if (checkUserInSpace) {
-    //   // throw new BadRequestException('이미 해당 스페이스의 멤버 입니다.');
-    // } else {
-    // }
-
-    // // 스페이스 멤버 등록
-    // const signUpSpaceMember = await this.spaceMemberRepository.save({
-    //   user_id: userId,
-    //   space_id: +spaceId,
-    // });
-
-    return {
-      id: space.id,
-      name: space.name,
-      user_id: space.user_id,
-    };
   }
 }

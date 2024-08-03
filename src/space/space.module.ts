@@ -15,5 +15,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
   ],
   controllers: [SpaceController],
   providers: [SpaceService],
+  exports: [SpaceService],
 })
 export class SpaceModule {}

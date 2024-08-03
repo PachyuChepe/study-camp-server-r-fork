@@ -10,4 +10,7 @@ export class CreateSpaceDto {
 
   @IsString()
   readonly content: string;
+
+  @IsString()
+  readonly image_url: string;
 }

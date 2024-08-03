@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { SpaceMemberService } from './space-member.service';
 import { CreateSpaceMemberDto } from './dto/create-space-member.dto';
@@ -27,26 +28,20 @@ export class SpaceMemberController {
     );
   }
 
-  @Get('/space/:spaceId')
-  findAllBySpace(@Param('spaceId') spaceId: string) {
-    return this.spaceMemberService.findAllBySpace(+spaceId);
+  @UseGuards(AuthGuard('jwt'), JwtAuthGuard)
+  @Get('/user')
+  async findAllByUser(@Req() req) {
+    const userId = req.user.id;
+    return await this.spaceMemberService.findAllMemberSpaceByUserId(userId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  async findOne(@Param('id') id: string) {
     return this.spaceMemberService.findOne(+id);
   }
 
-  // @Patch(':id')
-  // update(
-  //   @Param('id') id: string,
-  //   @Body() updateSpaceMemberDto: UpdateSpaceMemberDto,
-  // ) {
-  //   return this.spaceMemberService.update(+id, updateSpaceMemberDto);
-  // }
-
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string) {
     return this.spaceMemberService.remove(+id);
   }
 }
