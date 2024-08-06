@@ -88,49 +88,79 @@ export class AuthController {
     return { message: '로그아웃 성공' };
   }
 
-  // @Get('/google')
-  // @UseGuards(AuthGuard('google'))
-  // async googleAuth(@Req() req) {
-  //   // 추후 리다이렉트 페이지 작성
-  // }
-
-  // // @Get('/google/callback')
-  // // @UseGuards(AuthGuard('google'))
-  // // async googleAuthRedirect(@Req() req) {
-  // //   const user = req.user;
-  // //   const accessToken = this.authService.generateAccessToken(user);
-  // //   const refreshToken = this.authService.generateRefreshToken(user);
-
-  // //   await this.redisService.setRefreshToken(user.email, refreshToken);
-  // //   return { aaccess_token: accessToken };
-  // // }
+  @Get('/google')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth(@Req() req) {
+    // 추후 리다이렉트 페이지 작성
+  }
 
   // @Get('/google/callback')
   // @UseGuards(AuthGuard('google'))
-  // async googleAuthRedirect(@Req() req, @Res() res) {
+  // async googleAuthRedirect(@Req() req) {
   //   const user = req.user;
-  //   const accessToken = await this.authService.generateAccessToken(user);
-  //   await this.authService.generateRefreshToken(user);
-  //   // const memberSpaces = await this.spaceService.findSpacesByMember(user.id);
-  //   const memberSearch = await this.userService.findOne(user.email);
+  //   const accessToken = this.authService.generateAccessToken(user);
+  //   const refreshToken = this.authService.generateRefreshToken(user);
 
-  //   // 사용자 식별자를 키로 사용하여 인증 데이터 저장
-  //   await this.redisService.saveAuthData(user.id, {
-  //     access_token: accessToken,
-  //     // member_spaces: memberSpaces,
-  //     member_search: memberSearch,
-  //   });
-
-  //   // 클라이언트에게 인증 완료 신호 전송 (예: JavaScript 함수 호출)
-  //   const script = `<script>
-  //                     window.opener.postMessage({
-  //                       type: 'auth-complete',
-  //                       data: { userId: '${user.id}' }
-  //                     }, '*');
-  //                     window.close();
-  //                   </script>`;
-  //   res.send(script);
+  //   await this.redisService.setRefreshToken(user.email, refreshToken);
+  //   return { aaccess_token: accessToken };
   // }
+
+  @Get('/google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req, @Res() res) {
+    const user = req.user;
+    const accessToken = await this.authService.generateAccessToken(user);
+    await this.authService.generateRefreshToken(user);
+    // const memberSpaces = await this.spaceService.findSpacesByMember(user.id);
+    const memberSearch = await this.userService.findOne(user.email);
+
+    // 사용자 식별자를 키로 사용하여 인증 데이터 저장
+    await this.redisService.saveAuthData(user.id, {
+      access_token: accessToken,
+      // member_spaces: memberSpaces,
+      member_search: memberSearch,
+    });
+
+    // 클라이언트에게 인증 완료 신호 전송 (예: JavaScript 함수 호출)
+    const script = `<script>
+                      window.opener.postMessage({
+                        type: 'auth-complete',
+                        data: { userId: '${user.id}' }
+                      }, '*');
+                      window.close();
+                    </script>`;
+    res.send(script);
+  }
+
+  @Get('/kakao')
+  @UseGuards(AuthGuard('kakao'))
+  async kakaoAuth(@Req() req) {
+    // kakao 로그인
+  }
+
+  @Get('/kakao/callback')
+  @UseGuards(AuthGuard('kakao'))
+  async kakaoAuthRedirect(@Req() req, @Res() res) {
+    const user = req.user;
+    const accessToken = await this.authService.generateAccessToken(user);
+    await this.authService.generateRefreshToken(user);
+
+    // 사용자 식별자를 키로 사용하여 인증 데이터 저장
+    await this.redisService.saveAuthData(user.id, {
+      access_token: accessToken,
+      member_search: user,
+    });
+
+    // 클라이언트에게 인증 완료 신호 전송 (예: JavaScript 함수 호출)
+    const script = `<script>
+                      window.opener.postMessage({
+                        type: 'auth-complete',
+                        data: { userId: '${user.id}' }
+                      }, '*');
+                      window.close();
+                    </script>`;
+    res.send(script);
+  }
 
   @Get('/stream/:userId')
   async stream(@Param('userId') userId: string, @Res() res) {
@@ -144,7 +174,7 @@ export class AuthController {
     res.status(200).set({
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
+      'Connection': 'keep-alive',
     });
 
     res.write(`data: ${JSON.stringify(data)}\n\n`);
