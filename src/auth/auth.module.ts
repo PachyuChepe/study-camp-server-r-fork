@@ -15,6 +15,7 @@ import { GoogleStrategy } from './strategy/google.strategy';
 import { SpaceModule } from 'src/space/space.module';
 import { JwtAuthGuard } from './guard/jwt-auth.guard';
 import { GuestAuthGuard } from './guard/guest-auth.guard';
+import { KakaoStrategy } from './strategy/kakao.strategy';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { GuestAuthGuard } from './guard/guest-auth.guard';
     LocalAuthGuard,
     GuestAuthGuard,
     GoogleStrategy,
+    KakaoStrategy,
   ],
   controllers: [AuthController],
   exports: [AuthService],

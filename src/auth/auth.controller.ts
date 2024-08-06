@@ -132,6 +132,36 @@ export class AuthController {
     res.send(script);
   }
 
+  @Get('/kakao')
+  @UseGuards(AuthGuard('kakao'))
+  async kakaoAuth(@Req() req) {
+    // kakao 로그인
+  }
+
+  @Get('/kakao/callback')
+  @UseGuards(AuthGuard('kakao'))
+  async kakaoAuthRedirect(@Req() req, @Res() res) {
+    const user = req.user;
+    const accessToken = await this.authService.generateAccessToken(user);
+    await this.authService.generateRefreshToken(user);
+
+    // 사용자 식별자를 키로 사용하여 인증 데이터 저장
+    await this.redisService.saveAuthData(user.id, {
+      access_token: accessToken,
+      member_search: user,
+    });
+
+    // 클라이언트에게 인증 완료 신호 전송 (예: JavaScript 함수 호출)
+    const script = `<script>
+                      window.opener.postMessage({
+                        type: 'auth-complete',
+                        data: { userId: '${user.id}' }
+                      }, '*');
+                      window.close();
+                    </script>`;
+    res.send(script);
+  }
+
   @Get('/stream/:userId')
   async stream(@Param('userId') userId: string, @Res() res) {
     const data = await this.redisService.getAuthData(userId);
