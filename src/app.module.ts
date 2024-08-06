@@ -14,6 +14,8 @@ import { Space } from './space/entities/space.entity';
 import { SpaceMember } from './space-member/entities/space-member.entity';
 import { AuthModule } from './auth/auth.module';
 
+import { EventsModule } from './events/events.module';
+
 const typeOrmModuleOptions = {
   useFactory: async (
     configService: ConfigService,
@@ -50,6 +52,7 @@ const typeOrmModuleOptions = {
     UserModule,
     SpaceModule,
     SpaceMemberModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
