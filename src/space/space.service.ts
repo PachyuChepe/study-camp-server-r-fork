@@ -127,7 +127,7 @@ export class SpaceService {
         return false;
         return new BadRequestException('없는방');
       }
-      return true;
+      return result.id;
     } catch (error) {
       return false;
       console.error('Error in findOne:', error); // 에러 로그 출력
