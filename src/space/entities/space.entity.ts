@@ -35,6 +35,9 @@ export class Space {
   @Column({ type: 'text', nullable: true })
   image_url: string;
 
+  @Column({ type: 'text', nullable: false })
+  url: string;
+
   @OneToMany(() => SpaceMember, (spaceMember) => spaceMember.space, {
     onDelete: 'CASCADE',
   })

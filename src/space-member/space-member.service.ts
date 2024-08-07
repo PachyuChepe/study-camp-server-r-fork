@@ -43,15 +43,19 @@ export class SpaceMemberService {
     try {
       const members = await this.spaceMemberRepository.find({
         where: { user_id: userId },
-        relations: ['space'],
+        relations: ['space', 'space.spaceMembers'],
       });
 
       if (!members || members.length == 0) {
-        return null;
+        return [];
       }
 
       return members.map((member) => ({
-        space_id: member.space_id,
+        id: member.space_id,
+        image_url: member.space.image_url,
+        name: member.space.name,
+        membersCount: member.space.spaceMembers.length,
+        isPublic: member.space.password.length > 0,
       }));
     } catch (error) {
       throw new InternalServerErrorException('서버 오류 발생');

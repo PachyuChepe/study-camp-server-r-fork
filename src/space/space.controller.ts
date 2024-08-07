@@ -79,10 +79,12 @@ export class SpaceController {
   }
 
   // 초대 코드 검증
-  @UseGuards(AuthGuard('jwt'), JwtAuthGuard)
+  @UseGuards(AuthGuard('jwt'), GuestAuthGuard)
   @Post('/invitation/check')
   async checkInvitingCode(@Body('code') code: string, @Req() req) {
-    return await this.spaceService.checkInvitingCode(req.user.id, code);
+    // 로그인 상태 확인
+    const userId = req.user ? req.user.id : 0;
+    return await this.spaceService.checkInvitingCode(userId, code);
   }
 
   @UseGuards(AuthGuard('jwt'), GuestAuthGuard)

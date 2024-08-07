@@ -58,12 +58,11 @@ export class AuthController {
     }
 
     const newAccessToken = this.authService.generateAccessToken(user);
-
-    const memberSearch = await this.userService.findOne(user.email);
+    // const memberSearch = await this.userService.findOne(user.email);
 
     return {
       access_token: newAccessToken,
-      member_search: memberSearch,
+      // member_search: memberSearch,
     };
   }
 
@@ -112,13 +111,13 @@ export class AuthController {
     const accessToken = await this.authService.generateAccessToken(user);
     await this.authService.generateRefreshToken(user);
     // const memberSpaces = await this.spaceService.findSpacesByMember(user.id);
-    const memberSearch = await this.userService.findOne(user.email);
+    // const memberSearch = await this.userService.findOne(user.email);
 
     // 사용자 식별자를 키로 사용하여 인증 데이터 저장
     await this.redisService.saveAuthData(user.id, {
       access_token: accessToken,
       // member_spaces: memberSpaces,
-      member_search: memberSearch,
+      // member_search: memberSearch,
     });
 
     // 클라이언트에게 인증 완료 신호 전송 (예: JavaScript 함수 호출)
@@ -148,7 +147,7 @@ export class AuthController {
     // 사용자 식별자를 키로 사용하여 인증 데이터 저장
     await this.redisService.saveAuthData(user.id, {
       access_token: accessToken,
-      member_search: user,
+      // member_search: user,
     });
 
     // 클라이언트에게 인증 완료 신호 전송 (예: JavaScript 함수 호출)
