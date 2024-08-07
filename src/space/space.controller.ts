@@ -79,7 +79,7 @@ export class SpaceController {
   }
 
   // 초대 코드 검증
-  @UseGuards(AuthGuard('jwt'), GuestAuthGuard)
+  @UseGuards(GuestAuthGuard)
   @Post('/invitation/check')
   async checkInvitingCode(@Body('code') code: string, @Req() req) {
     // 로그인 상태 확인
@@ -87,7 +87,7 @@ export class SpaceController {
     return await this.spaceService.checkInvitingCode(userId, code);
   }
 
-  @UseGuards(AuthGuard('jwt'), GuestAuthGuard)
+  @UseGuards(GuestAuthGuard)
   @Post('/enter')
   async enterSpace(@Body() body, @Req() req) {
     const spaceId = body.spaceId;
@@ -95,5 +95,15 @@ export class SpaceController {
     // 로그인 상태 확인
     const userId = req.user ? req.user.id : 0;
     return await this.spaceService.checkPassword(userId, spaceId, password);
+  }
+
+  @UseGuards(GuestAuthGuard)
+  @Get('/url/:url')
+  async checkURL(@Param('url') url: string, @Req() req) {
+    // const spaceId = body.spaceId;
+    // const password = body.password;
+    // 로그인 상태 확인
+    // const userId = req.user ? req.user.id : 0;
+    return await this.spaceService.findOneURL(url);
   }
 }

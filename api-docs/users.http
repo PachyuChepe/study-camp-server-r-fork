@@ -12,7 +12,7 @@ POST {{domain}}/user
 Content-Type: application/json
 
 {
-  "email": "user2@gmail.com",
+  "email": "user@gmail.com",
   "password": "1234",
   "passwordConfirm": "1234",
   "nick_name": "닉네임"
