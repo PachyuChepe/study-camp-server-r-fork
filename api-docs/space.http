@@ -84,3 +84,17 @@ Content-Type: application/json
 {
   "code": "1GO3X3"
 }
+
+
+###
+# 이미지 업로드 테스트 - imageFile
+POST {{domain}}/object-storage/upload
+Authorization: Bearer {{AccessToken}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="image7.png"
+Content-Type: image/png
+
+< ./image.png
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
