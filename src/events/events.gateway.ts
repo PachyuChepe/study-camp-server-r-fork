@@ -124,10 +124,15 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return { status: 'error', message: 'User not found' };
     }
     const spaceId = userData.spaceId;
+    const nickName = userData.nickName;
     const message = data.message;
 
-    this.server.to(spaceId.toString()).emit('spaceMessage', `${message}`);
-    console.log(`spaceMessage: ${message}`);
+    this.server
+      .to(spaceId.toString())
+      .emit('spaceMessage', { nickName, message });
+    console.log(
+      `spaceId : ${spaceId} nickName : ${nickName} spaceMessage: ${message}`,
+    );
   }
 
   @SubscribeMessage('sendLayerMessage')
@@ -140,10 +145,13 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return { status: 'error', message: 'User not found' };
     }
     const spaceId = userData.spaceId;
+    const nickName = userData.nickName;
     const layer = userData.layer;
     const message = data.message;
 
-    this.server.to(spaceId + '_' + layer).emit('layerMessage', `${message}`);
+    this.server
+      .to(spaceId + '_' + layer)
+      .emit('layerMessage', { nickName, message });
     console.log(`layerMessage: ${message}`);
   }
 
