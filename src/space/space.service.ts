@@ -36,12 +36,26 @@ export class SpaceService {
         throw new BadRequestException('해당하는 방이 이미 존재합니다.');
       }
 
+      const numbers = '0123456789';
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let url = '';
+
+      for (let i = 0; i < 10; i++) {
+        url += numbers.charAt(Math.floor(Math.random() * numbers.length));
+        url += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+
+      // for (let i = 10; i < 20; i++) {
+      //   url += characters.charAt(Math.floor(Math.random() * characters.length));
+      // }
+
       let newSpace = this.spaceRepository.create({
         name,
         content,
         password,
         image_url,
         user_id: userId,
+        url,
       });
       newSpace = await this.spaceRepository.save(newSpace);
 
@@ -57,7 +71,7 @@ export class SpaceService {
   async findAll() {
     try {
       const spaces = await this.spaceRepository.find({
-        select: ['id', 'user_id', 'content', 'name', 'image_url'],
+        // select: ['id', 'user_id', 'content', 'name', 'image_url'],
         relations: ['spaceMembers'],
       });
 
@@ -68,6 +82,7 @@ export class SpaceService {
         content: space.content,
         image_url: space.image_url,
         membersCount: space.spaceMembers.length,
+        isPublic: space.password.length == 0,
       }));
     } catch (error) {
       throw new InternalServerErrorException('서버 오류 발생');
@@ -78,7 +93,7 @@ export class SpaceService {
     try {
       const result = await this.spaceRepository.findOne({
         where: { id },
-        select: ['id', 'user_id', 'content', 'name', 'image_url'],
+        // select: ['id', 'user_id', 'content', 'name', 'image_url'],
         relations: ['spaceMembers'],
       });
 
@@ -94,8 +109,27 @@ export class SpaceService {
         content: result.content,
         image_url: result.image_url,
         membersCount,
+        isPublic: result.password.length == 0,
       };
     } catch (error) {
+      console.error('Error in findOne:', error); // 에러 로그 출력
+      throw new ConflictException('서버 에러 findOne');
+    }
+  }
+
+  async findOneURL(url: string) {
+    try {
+      const result = await this.spaceRepository.findOne({
+        where: { url },
+      });
+
+      if (!result) {
+        return false;
+        return new BadRequestException('없는방');
+      }
+      return result.id;
+    } catch (error) {
+      return false;
       console.error('Error in findOne:', error); // 에러 로그 출력
       throw new ConflictException('서버 에러 findOne');
     }
@@ -105,7 +139,7 @@ export class SpaceService {
     try {
       const result = await this.spaceRepository.findOne({
         where: { id },
-        select: ['id', 'user_id', 'content', 'name', 'image_url'],
+        // select: ['id', 'user_id', 'content', 'name', 'image_url','password'],
         relations: ['spaceMembers'],
       });
 
@@ -128,7 +162,7 @@ export class SpaceService {
     try {
       const result = await this.spaceRepository.findOne({
         where: { name },
-        select: ['id', 'user_id', 'content', 'name', 'image_url'],
+        // select: ['id', 'user_id', 'content', 'name', 'image_url','password'],
         relations: ['spaceMembers'],
       });
 
@@ -143,6 +177,7 @@ export class SpaceService {
         content: result.content,
         image_url: result.image_url,
         membersCount,
+        isPublic: result.password.length == 0,
       };
     } catch (error) {
       throw new ConflictException('서버 에러 findSpaceByName');
@@ -178,13 +213,12 @@ export class SpaceService {
 
       for (let i = 0; i < 3; i++) {
         result += numbers.charAt(Math.floor(Math.random() * numbers.length));
-      }
-
-      for (let i = 3; i < 6; i++) {
         result += characters.charAt(
           Math.floor(Math.random() * characters.length),
         );
       }
+
+      // for (let i = 3; i < 6; i++) {}
 
       result = result
         .split('')
@@ -210,16 +244,18 @@ export class SpaceService {
         relations: ['spaceMembers'],
       });
 
-      let member = await this.spaceMemberService.findExistSpaceMember(
-        userId,
-        +spaceId,
-      );
-      if (!member) {
-        // 스페이스 멤버 등록
-        member = await this.spaceMemberService.create(userId, +spaceId);
+      if (!!userId) {
+        let member = await this.spaceMemberService.findExistSpaceMember(
+          userId,
+          +spaceId,
+        );
+        if (!member) {
+          // 스페이스 멤버 등록
+          member = await this.spaceMemberService.create(userId, +spaceId);
+        }
       }
 
-      return member;
+      return { id: space.id, url: space.url };
     } catch (error) {
       throw error;
     }
@@ -228,29 +264,35 @@ export class SpaceService {
   // 비밀번호 입장 검증
   async checkPassword(userId: number, spaceId: number, password: string) {
     try {
-      // 유저가 이미 멤버이면 입장
-      if (userId != null) {
-        let member = await this.spaceMemberService.findExistSpaceMember(
-          +userId,
-          +spaceId,
-        );
-        return { user_id: userId, member_id: member.id };
-      }
-
       const space = await this.spaceRepository.findOne({
         where: { id: spaceId },
       });
+
+      // console.log('checkPassword', space);
+
       if (!space) {
         throw new NotFoundException('해당 스페이스가 없음');
       }
 
+      // console.log('checkPassword', !!userId);
+      // 유저가 이미 멤버이면 입장
+      if (!!userId) {
+        let member = await this.spaceMemberService.findExistSpaceMember(
+          +userId,
+          +spaceId,
+        );
+        if (member)
+          return { user_id: userId, member_id: member.id, url: space.url };
+      }
+
+      // console.log('checkPassword', space.password, password);
       if (space.password == password) {
-        if (userId != null) {
+        if (!!userId) {
           let member = await this.spaceMemberService.create(userId, +spaceId);
 
-          return { user_id: userId, member_id: member.id };
+          return { user_id: userId, member_id: member.id, url: space.url };
         } else {
-          return { user_id: null, member_id: null };
+          return { user_id: null, member_id: null, url: space.url };
         }
         return true;
       } else {

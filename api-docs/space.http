@@ -17,6 +17,9 @@ Content-Type: application/json
 POST {{domain}}/auth/logout
 Content-Type: application/json
 Authorization: Bearer {{AccessToken}}
+###
+# AccessToken 초기화
+# @AccessToken = 
 
 ###
 # 학습공간 생성하기 
@@ -25,9 +28,9 @@ Authorization: Bearer {{AccessToken}}
 Content-Type: application/json
 
 {
-  "name": "test1",
+  "name": "url3",
   "content": "",
-  "password": "",
+  "password": "123",
   "image_url" : ""
 }
 
@@ -65,7 +68,7 @@ Authorization: Bearer {{AccessToken}}
 Content-Type: application/json
 
 {
-  "spaceId": "2",
+  "spaceId": 1,
   "password": ""
 }
 
@@ -82,7 +85,7 @@ Authorization: Bearer {{AccessToken}}
 Content-Type: application/json
 
 {
-  "code": "1GO3X3"
+  "code": "99TI1R"
 }
 
 
