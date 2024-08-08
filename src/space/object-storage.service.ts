@@ -118,12 +118,22 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
       let installCommand = '';
 
       if (platform === 'linux') {
-        // Determine the Linux distribution
         try {
-          const distro = execSync('lsb_release -is')
-            .toString()
-            .trim()
-            .toLowerCase();
+          // Read distribution info from /etc/os-release
+          const osReleaseContent = fs.readFileSync('/etc/os-release', 'utf8');
+          const lines = osReleaseContent.split('\n');
+          let distro = '';
+          for (const line of lines) {
+            if (line.startsWith('ID=')) {
+              distro = line
+                .split('=')[1]
+                .replace(/"/g, '')
+                .trim()
+                .toLowerCase();
+              break;
+            }
+          }
+
           if (distro === 'ubuntu' || distro === 'debian') {
             installCommand = 'sudo apt-get install -y acl';
           } else if (distro === 'centos' || distro === 'redhat') {
@@ -134,6 +144,7 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
             );
             return;
           }
+
           this.logger.log(`Running: ${installCommand}`);
           execSync(installCommand, { stdio: 'inherit' });
           this.logger.log('ACL installation completed successfully.');
