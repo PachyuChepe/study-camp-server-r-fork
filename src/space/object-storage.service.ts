@@ -80,16 +80,20 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
       // 권한 설정
       this.setPermissions(apiKeyFilePath);
 
+      console.log(1);
       // 인증 제공자 설정
       const provider = new common.ConfigFileAuthenticationDetailsProvider(
         configFilePath,
       );
+      console.log(2);
       this.objectStorageClient = new objectStorage.ObjectStorageClient({
         authenticationDetailsProvider: provider,
       });
+      console.log(3);
 
       this.namespace = this.configService.get<string>('OCI_NAMESPACE');
       this.bucketName = this.configService.get<string>('OCI_BUCKET_NAME');
+      console.log(4);
 
       this.logger.log(`Namespace: ${this.namespace}`);
       this.logger.log(`Bucket Name: ${this.bucketName}`);
@@ -175,13 +179,13 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
 
         // Set file permissions
         fs.chmodSync(filePath, '600');
-
+        this.logger.log(`Permissions set for Linux/macOS file: ${filePath}`);
         // // ACL setting
         // try {
         //   execSync(`setfacl -m u::rw ${filePath}`);
         //   execSync(`setfacl -m g::--- ${filePath}`);
         //   execSync(`setfacl -m o::--- ${filePath}`);
-        //   this.logger.log(`Permissions set for Linux/macOS file: ${filePath}`);
+        //
         // } catch (aclError) {
         //   this.logger.error(
         //     `Failed to set ACL permissions on file: ${filePath}`,
