@@ -174,6 +174,12 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
         // this.installAcl();
 
         // Set file permissions
+        console.log(platform);
+        if (!fs.existsSync(filePath)) {
+          this.logger.error(`File does not exist: ${filePath}`);
+          return;
+        }
+
         fs.chmodSync(filePath, '600');
 
         // ACL setting
