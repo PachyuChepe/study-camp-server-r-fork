@@ -41,20 +41,13 @@ export class ObjectStorageService {
         throw new Error('OCI_API_KEY is not defined in .env file');
       }
 
-      // 상대 경로를 절대 경로로 변환
-      const keyFilePath = this.configService.get<string>('OCI_KEY_FILE');
-      if (!keyFilePath) {
-        throw new Error('OCI_KEY_FILE is not defined');
-      }
-      const absoluteKeyFilePath = path.resolve(keyFilePath);
-
       // 인증 정보를 포함한 구성 파일을 작성
       const configFileContent = `[DEFAULT]
 user=${this.configService.get<string>('OCI_USER')}
 fingerprint=${this.configService.get<string>('OCI_FINGERPRINT')}
 tenancy=${this.configService.get<string>('OCI_TENANCY')}
 region=${this.configService.get<string>('OCI_REGION')}
-key_file=${absoluteKeyFilePath}`;
+key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
 
       this.logger.log(`Config file content:\n${configFileContent}`);
 
@@ -79,7 +72,7 @@ key_file=${absoluteKeyFilePath}`;
       }
 
       this.logger.log(`Creating API key file at: ${apiKeyFilePath}`);
-      fs.writeFileSync(apiKeyFilePath, apiKeyContent.replace(/\r\n/g, '\n')); // 줄바꿈 문자 처리
+      fs.writeFileSync(apiKeyFilePath, apiKeyContent.replace(/\(\)/g, '\n')); // 줄바꿈 문자 처리
       this.logger.log(`API key file created at: ${apiKeyFilePath}`);
 
       // 권한 설정
