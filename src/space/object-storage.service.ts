@@ -122,10 +122,9 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
           }
 
           if (distro === 'ubuntu' || distro === 'debian') {
-            installCommand =
-              'sudo apt-get update && sudo apt-get install -y acl';
+            installCommand = 'apt-get update && apt-get install -y acl';
           } else if (distro === 'centos' || distro === 'redhat') {
-            installCommand = 'sudo yum install -y acl';
+            installCommand = 'yum install -y acl';
           } else {
             this.logger.warn(
               'Unsupported Linux distribution detected for ACL installation.',
