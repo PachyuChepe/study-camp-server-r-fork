@@ -54,7 +54,11 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
       this.logger.log(`Config file content:\n${configFileContent}`);
 
       // 구성 파일을 작성
-      fs.writeFileSync(configFilePath, configFileContent);
+      // fs.writeFileSync(configFilePath, configFileContent);
+      fs.writeFileSync(
+        configFilePath,
+        configFileContent.replace(/\r\n/g, '\n'),
+      ); // 줄바꿈 문자 처리
       this.logger.log(`Config file created at: ${configFilePath}`);
 
       // PEM 파일 생성
@@ -71,7 +75,8 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
       }
 
       this.logger.log(`Creating API key file at: ${apiKeyFilePath}`);
-      fs.writeFileSync(apiKeyFilePath, apiKeyContent);
+      // fs.writeFileSync(apiKeyFilePath, apiKeyContent);
+      fs.writeFileSync(apiKeyFilePath, apiKeyContent.replace(/\r\n/g, '\n')); // 줄바꿈 문자 처리
       this.logger.log(`API key file created at: ${apiKeyFilePath}`);
 
       // 권한 설정
