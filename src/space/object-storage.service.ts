@@ -54,7 +54,6 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
       this.logger.log(`Config file content:\n${configFileContent}`);
 
       // 구성 파일을 작성
-      // fs.writeFileSync(configFilePath, configFileContent);
       fs.writeFileSync(
         configFilePath,
         configFileContent.replace(/\r\n/g, '\n'),
@@ -75,7 +74,6 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
       }
 
       this.logger.log(`Creating API key file at: ${apiKeyFilePath}`);
-      // fs.writeFileSync(apiKeyFilePath, apiKeyContent);
       fs.writeFileSync(apiKeyFilePath, apiKeyContent.replace(/\r\n/g, '\n')); // 줄바꿈 문자 처리
       this.logger.log(`API key file created at: ${apiKeyFilePath}`);
 
@@ -98,17 +96,6 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
     } catch (error) {
       this.logger.error('Failed to initialize ObjectStorageService', error);
       throw error;
-    }
-  }
-
-  private checkAndInstallAcl() {
-    try {
-      // Check if ACL is installed
-      execSync('which setfacl', { stdio: 'ignore' });
-      this.logger.log('ACL is already installed.');
-    } catch {
-      this.logger.log('ACL is not installed. Installing...');
-      this.installAcl();
     }
   }
 
@@ -135,7 +122,8 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
           }
 
           if (distro === 'ubuntu' || distro === 'debian') {
-            installCommand = 'sudo apt-get install -y acl';
+            installCommand =
+              'sudo apt-get update && sudo apt-get install -y acl';
           } else if (distro === 'centos' || distro === 'redhat') {
             installCommand = 'sudo yum install -y acl';
           } else {
@@ -170,7 +158,6 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
     if (platform === 'win32') {
       try {
         this.logger.log(`Setting permissions for Windows on file: ${filePath}`);
-        // 권한 설정
         execSync(`icacls "${filePath}" /inheritance:r`);
         execSync(`icacls "${filePath}" /grant:r "BUILTIN\\Administrators:(F)"`);
         execSync(`icacls "${filePath}" /grant:r "NT AUTHORITY\\SYSTEM:(F)"`);
@@ -183,16 +170,23 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
         this.logger.error('Failed to set permissions on Windows file', error);
       }
     } else if (platform === 'linux' || platform === 'darwin') {
-      this.checkAndInstallAcl(); // Ensure ACL is installed
-
       try {
+        // Install ACL if not already installed
+        this.installAcl();
+
+        // Set file permissions
         fs.chmodSync(filePath, '600');
-        // ACL 설정
-        execSync(`setfacl -m u::rw ${filePath}`);
-        execSync(`setfacl -m g::--- ${filePath}`);
-        execSync(`setfacl -m o::--- ${filePath}`);
-        // this.logger.log(`ACL permissions set for Linux/macOS file: ${filePath}`);
-        this.logger.log(`Permissions set for Linux/macOS file: ${filePath}`);
+
+        // ACL setting
+        try {
+          execSync(`setfacl -m u::rw ${filePath}`);
+          execSync(`setfacl -m g::--- ${filePath}`);
+          execSync(`setfacl -m o::--- ${filePath}`);
+          this.logger.log(`Permissions set for Linux/macOS file: ${filePath}`);
+        } catch (aclError) {
+          this.logger.error('Failed to set ACL permissions', aclError);
+          this.logger.warn('Make sure ACL is installed.');
+        }
       } catch (error) {
         this.logger.error(
           'Failed to set permissions on Linux/macOS file',
