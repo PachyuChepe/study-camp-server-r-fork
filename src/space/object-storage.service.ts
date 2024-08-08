@@ -174,29 +174,20 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
         // this.installAcl();
 
         // Set file permissions
-        console.log(platform);
-        if (!fs.existsSync(filePath)) {
-          this.logger.error(`File does not exist: ${filePath}`);
-          return;
-        }
-
         fs.chmodSync(filePath, '600');
 
-        // ACL setting
-        try {
-          execSync(`setfacl -m u::rw ${filePath}`);
-          execSync(`setfacl -m g::--- ${filePath}`);
-          execSync(`setfacl -m o::--- ${filePath}`);
-          this.logger.log(`Permissions set for Linux/macOS file: ${filePath}`);
-        } catch (aclError) {
-          this.logger.error(
-            `Failed to set ACL permissions on file: ${filePath}`,
-            aclError,
-          );
-          this.logger.warn(
-            'Make sure ACL is installed and the file path is correct.',
-          );
-        }
+        // // ACL setting
+        // try {
+        //   execSync(`setfacl -m u::rw ${filePath}`);
+        //   execSync(`setfacl -m g::--- ${filePath}`);
+        //   execSync(`setfacl -m o::--- ${filePath}`);
+        //   this.logger.log(`Permissions set for Linux/macOS file: ${filePath}`);
+        // } catch (aclError) {
+        //   this.logger.error(
+        //     `Failed to set ACL permissions on file: ${filePath}`,
+        //     aclError,
+        //   );
+        // }
       } catch (error) {
         this.logger.error(
           'Failed to set permissions on Linux/macOS file',
