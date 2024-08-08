@@ -189,8 +189,13 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
           execSync(`setfacl -m o::--- ${filePath}`);
           this.logger.log(`Permissions set for Linux/macOS file: ${filePath}`);
         } catch (aclError) {
-          this.logger.error('Failed to set ACL permissions', aclError);
-          this.logger.warn('Make sure ACL is installed.');
+          this.logger.error(
+            `Failed to set ACL permissions on file: ${filePath}`,
+            aclError,
+          );
+          this.logger.warn(
+            'Make sure ACL is installed and the file path is correct.',
+          );
         }
       } catch (error) {
         this.logger.error(
