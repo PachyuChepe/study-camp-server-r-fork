@@ -68,6 +68,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.userMap.set(client.id, userData);
 
     client.join(data.spaceId.toString());
+    client.join(data.spaceId + '_' + data.layer);
 
     const spaceUsers = [...this.userMap.values()].filter(
       (user) => user.spaceId === data.spaceId,
@@ -152,7 +153,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server
       .to(spaceId + '_' + layer)
       .emit('layerMessage', { nickName, message });
-    console.log(`layerMessage: ${message}`);
+    console.log(
+      `spaceId : ${spaceId} layer : ${layer} nickName : ${nickName} spaceMessage: ${message}`,
+    );
   }
 
   @SubscribeMessage('movePlayer')
