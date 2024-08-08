@@ -99,57 +99,57 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
     }
   }
 
-  private installAcl() {
-    try {
-      const platform = os.platform();
-      let installCommand = '';
+  // private installAcl() {
+  //   try {
+  //     const platform = os.platform();
+  //     let installCommand = '';
 
-      if (platform === 'linux') {
-        try {
-          // Read distribution info from /etc/os-release
-          const osReleaseContent = fs.readFileSync('/etc/os-release', 'utf8');
-          const lines = osReleaseContent.split('\n');
-          let distro = '';
-          for (const line of lines) {
-            if (line.startsWith('ID=')) {
-              distro = line
-                .split('=')[1]
-                .replace(/"/g, '')
-                .trim()
-                .toLowerCase();
-              break;
-            }
-          }
+  //     if (platform === 'linux') {
+  //       try {
+  //         // Read distribution info from /etc/os-release
+  //         const osReleaseContent = fs.readFileSync('/etc/os-release', 'utf8');
+  //         const lines = osReleaseContent.split('\n');
+  //         let distro = '';
+  //         for (const line of lines) {
+  //           if (line.startsWith('ID=')) {
+  //             distro = line
+  //               .split('=')[1]
+  //               .replace(/"/g, '')
+  //               .trim()
+  //               .toLowerCase();
+  //             break;
+  //           }
+  //         }
 
-          if (distro === 'ubuntu' || distro === 'debian') {
-            installCommand = 'apt-get update && apt-get install -y acl';
-          } else if (distro === 'centos' || distro === 'redhat') {
-            installCommand = 'yum install -y acl';
-          } else {
-            this.logger.warn(
-              'Unsupported Linux distribution detected for ACL installation.',
-            );
-            return;
-          }
+  //         if (distro === 'ubuntu' || distro === 'debian') {
+  //           installCommand = 'apt-get update && apt-get install -y acl';
+  //         } else if (distro === 'centos' || distro === 'redhat') {
+  //           installCommand = 'yum install -y acl';
+  //         } else {
+  //           this.logger.warn(
+  //             'Unsupported Linux distribution detected for ACL installation.',
+  //           );
+  //           return;
+  //         }
 
-          this.logger.log(`Running: ${installCommand}`);
-          execSync(installCommand, { stdio: 'inherit' });
-          this.logger.log('ACL installation completed successfully.');
-        } catch (distroError) {
-          this.logger.error(
-            'Failed to determine the Linux distribution for ACL installation',
-            distroError,
-          );
-        }
-      } else {
-        this.logger.log(
-          'Non-Linux platform detected. ACL installation is not supported.',
-        );
-      }
-    } catch (error) {
-      this.logger.error('Failed to install ACL', error);
-    }
-  }
+  //         this.logger.log(`Running: ${installCommand}`);
+  //         execSync(installCommand, { stdio: 'inherit' });
+  //         this.logger.log('ACL installation completed successfully.');
+  //       } catch (distroError) {
+  //         this.logger.error(
+  //           'Failed to determine the Linux distribution for ACL installation',
+  //           distroError,
+  //         );
+  //       }
+  //     } else {
+  //       this.logger.log(
+  //         'Non-Linux platform detected. ACL installation is not supported.',
+  //       );
+  //     }
+  //   } catch (error) {
+  //     this.logger.error('Failed to install ACL', error);
+  //   }
+  // }
 
   private setPermissions(filePath: string) {
     const platform = os.platform();
@@ -171,7 +171,7 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
     } else if (platform === 'linux' || platform === 'darwin') {
       try {
         // Install ACL if not already installed
-        this.installAcl();
+        // this.installAcl();
 
         // Set file permissions
         fs.chmodSync(filePath, '600');
