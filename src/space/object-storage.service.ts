@@ -108,7 +108,7 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
       try {
         this.logger.log(`Setting permissions for Windows on file: ${filePath}`);
         // 권한 설정
-        execSync(`icacls ".oci/key.pem" /inheritance:r`);
+        execSync(`icacls "${filePath}" /inheritance:r`);
         execSync(`icacls "${filePath}" /grant:r "BUILTIN\\Administrators:(F)"`);
         execSync(`icacls "${filePath}" /grant:r "NT AUTHORITY\\SYSTEM:(F)"`);
         execSync(
@@ -122,6 +122,11 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
     } else if (platform === 'linux' || platform === 'darwin') {
       try {
         fs.chmodSync(filePath, '600');
+        // ACL 설정
+        execSync(`setfacl -m u::rw ${filePath}`);
+        execSync(`setfacl -m g::--- ${filePath}`);
+        execSync(`setfacl -m o::--- ${filePath}`);
+        // this.logger.log(`ACL permissions set for Linux/macOS file: ${filePath}`);
         this.logger.log(`Permissions set for Linux/macOS file: ${filePath}`);
       } catch (error) {
         this.logger.error(
