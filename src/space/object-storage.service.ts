@@ -41,13 +41,20 @@ export class ObjectStorageService {
         throw new Error('OCI_API_KEY is not defined in .env file');
       }
 
+      // 상대 경로를 절대 경로로 변환
+      const keyFilePath = this.configService.get<string>('OCI_KEY_FILE');
+      if (!keyFilePath) {
+        throw new Error('OCI_KEY_FILE is not defined');
+      }
+      const absoluteKeyFilePath = path.resolve(keyFilePath);
+
       // 인증 정보를 포함한 구성 파일을 작성
       const configFileContent = `[DEFAULT]
 user=${this.configService.get<string>('OCI_USER')}
 fingerprint=${this.configService.get<string>('OCI_FINGERPRINT')}
 tenancy=${this.configService.get<string>('OCI_TENANCY')}
 region=${this.configService.get<string>('OCI_REGION')}
-key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
+key_file=${absoluteKeyFilePath}`;
 
       this.logger.log(`Config file content:\n${configFileContent}`);
 
@@ -57,14 +64,6 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
         configFileContent.replace(/\r\n/g, '\n'),
       ); // 줄바꿈 문자 처리
       this.logger.log(`Config file created at: ${configFilePath}`);
-
-      // 파일의 내용 읽어와서 로그에 출력
-      try {
-        const fileContent = fs.readFileSync(configFilePath, 'utf8');
-        this.logger.log(`Content of the config file:\n${fileContent}`);
-      } catch (readError) {
-        this.logger.error('Failed to read the config file', readError);
-      }
 
       // PEM 파일 생성
       const apiKeyFilePath = this.configService.get<string>('OCI_KEY_FILE');
@@ -109,58 +108,6 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
     }
   }
 
-  // private installAcl() {
-  //   try {
-  //     const platform = os.platform();
-  //     let installCommand = '';
-
-  //     if (platform === 'linux') {
-  //       try {
-  //         // Read distribution info from /etc/os-release
-  //         const osReleaseContent = fs.readFileSync('/etc/os-release', 'utf8');
-  //         const lines = osReleaseContent.split('\n');
-  //         let distro = '';
-  //         for (const line of lines) {
-  //           if (line.startsWith('ID=')) {
-  //             distro = line
-  //               .split('=')[1]
-  //               .replace(/"/g, '')
-  //               .trim()
-  //               .toLowerCase();
-  //             break;
-  //           }
-  //         }
-
-  //         if (distro === 'ubuntu' || distro === 'debian') {
-  //           installCommand = 'apt-get update && apt-get install -y acl';
-  //         } else if (distro === 'centos' || distro === 'redhat') {
-  //           installCommand = 'yum install -y acl';
-  //         } else {
-  //           this.logger.warn(
-  //             'Unsupported Linux distribution detected for ACL installation.',
-  //           );
-  //           return;
-  //         }
-
-  //         this.logger.log(`Running: ${installCommand}`);
-  //         execSync(installCommand, { stdio: 'inherit' });
-  //         this.logger.log('ACL installation completed successfully.');
-  //       } catch (distroError) {
-  //         this.logger.error(
-  //           'Failed to determine the Linux distribution for ACL installation',
-  //           distroError,
-  //         );
-  //       }
-  //     } else {
-  //       this.logger.log(
-  //         'Non-Linux platform detected. ACL installation is not supported.',
-  //       );
-  //     }
-  //   } catch (error) {
-  //     this.logger.error('Failed to install ACL', error);
-  //   }
-  // }
-
   private setPermissions(filePath: string) {
     const platform = os.platform();
 
@@ -180,24 +127,9 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
       }
     } else if (platform === 'linux' || platform === 'darwin') {
       try {
-        // Install ACL if not already installed
-        // this.installAcl();
-
         // Set file permissions
         fs.chmodSync(filePath, '600');
         this.logger.log(`Permissions set for Linux/macOS file: ${filePath}`);
-        // // ACL setting
-        // try {
-        //   execSync(`setfacl -m u::rw ${filePath}`);
-        //   execSync(`setfacl -m g::--- ${filePath}`);
-        //   execSync(`setfacl -m o::--- ${filePath}`);
-        //
-        // } catch (aclError) {
-        //   this.logger.error(
-        //     `Failed to set ACL permissions on file: ${filePath}`,
-        //     aclError,
-        //   );
-        // }
       } catch (error) {
         this.logger.error(
           'Failed to set permissions on Linux/macOS file',
