@@ -101,6 +101,58 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
     }
   }
 
+  private checkAndInstallAcl() {
+    try {
+      // Check if ACL is installed
+      execSync('which setfacl', { stdio: 'ignore' });
+      this.logger.log('ACL is already installed.');
+    } catch {
+      this.logger.log('ACL is not installed. Installing...');
+      this.installAcl();
+    }
+  }
+
+  private installAcl() {
+    try {
+      const platform = os.platform();
+      let installCommand = '';
+
+      if (platform === 'linux') {
+        // Determine the Linux distribution
+        try {
+          const distro = execSync('lsb_release -is')
+            .toString()
+            .trim()
+            .toLowerCase();
+          if (distro === 'ubuntu' || distro === 'debian') {
+            installCommand = 'sudo apt-get install -y acl';
+          } else if (distro === 'centos' || distro === 'redhat') {
+            installCommand = 'sudo yum install -y acl';
+          } else {
+            this.logger.warn(
+              'Unsupported Linux distribution detected for ACL installation.',
+            );
+            return;
+          }
+          this.logger.log(`Running: ${installCommand}`);
+          execSync(installCommand, { stdio: 'inherit' });
+          this.logger.log('ACL installation completed successfully.');
+        } catch (distroError) {
+          this.logger.error(
+            'Failed to determine the Linux distribution for ACL installation',
+            distroError,
+          );
+        }
+      } else {
+        this.logger.log(
+          'Non-Linux platform detected. ACL installation is not supported.',
+        );
+      }
+    } catch (error) {
+      this.logger.error('Failed to install ACL', error);
+    }
+  }
+
   private setPermissions(filePath: string) {
     const platform = os.platform();
 
@@ -120,6 +172,8 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
         this.logger.error('Failed to set permissions on Windows file', error);
       }
     } else if (platform === 'linux' || platform === 'darwin') {
+      this.checkAndInstallAcl(); // Ensure ACL is installed
+
       try {
         fs.chmodSync(filePath, '600');
         // ACL 설정
