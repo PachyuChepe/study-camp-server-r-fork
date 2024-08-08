@@ -78,20 +78,16 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
       // 권한 설정
       this.setPermissions(apiKeyFilePath);
 
-      console.log(1);
       // 인증 제공자 설정
       const provider = new common.ConfigFileAuthenticationDetailsProvider(
         configFilePath,
       );
-      console.log(2, provider);
       this.objectStorageClient = new objectStorage.ObjectStorageClient({
         authenticationDetailsProvider: provider,
       });
-      console.log(3);
 
       this.namespace = this.configService.get<string>('OCI_NAMESPACE');
       this.bucketName = this.configService.get<string>('OCI_BUCKET_NAME');
-      console.log(4);
 
       this.logger.log(`Namespace: ${this.namespace}`);
       this.logger.log(`Bucket Name: ${this.bucketName}`);
