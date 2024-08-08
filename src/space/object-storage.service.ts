@@ -42,14 +42,12 @@ export class ObjectStorageService {
       }
 
       // 인증 정보를 포함한 구성 파일을 작성
-      const configFileContent = `
-[DEFAULT]
+      const configFileContent = `[DEFAULT]
 user=${this.configService.get<string>('OCI_USER')}
 fingerprint=${this.configService.get<string>('OCI_FINGERPRINT')}
 tenancy=${this.configService.get<string>('OCI_TENANCY')}
 region=${this.configService.get<string>('OCI_REGION')}
-key_file=${this.configService.get<string>('OCI_KEY_FILE')}
-`;
+key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
 
       this.logger.log(`Config file content:\n${configFileContent}`);
 
@@ -59,6 +57,14 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
         configFileContent.replace(/\r\n/g, '\n'),
       ); // 줄바꿈 문자 처리
       this.logger.log(`Config file created at: ${configFilePath}`);
+
+      // 파일의 내용 읽어와서 로그에 출력
+      try {
+        const fileContent = fs.readFileSync(configFilePath, 'utf8');
+        this.logger.log(`Content of the config file:\n${fileContent}`);
+      } catch (readError) {
+        this.logger.error('Failed to read the config file', readError);
+      }
 
       // PEM 파일 생성
       const apiKeyFilePath = this.configService.get<string>('OCI_KEY_FILE');
@@ -85,7 +91,7 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}
       const provider = new common.ConfigFileAuthenticationDetailsProvider(
         configFilePath,
       );
-      console.log(2);
+      console.log(2, provider);
       this.objectStorageClient = new objectStorage.ObjectStorageClient({
         authenticationDetailsProvider: provider,
       });
