@@ -198,7 +198,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // console.log(`offer send ${client.id} res ${data.socketId}`);
     this.server
       .to(data.target)
-      .emit('offer', { sdp: data.sdp, sender: client.id });
+      .emit('offer', { sdp: data.sdp, sender: client.id, status: data.status });
   }
 
   @SubscribeMessage('answer')
@@ -212,7 +212,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // console.log(`answer send: ${client.id} res: ${data.socketId}`);
     this.server
       .to(data.target)
-      .emit('answer', { sdp: data.sdp, sender: client.id });
+      .emit('answer', {
+        sdp: data.sdp,
+        sender: client.id,
+        status: data.status,
+      });
   }
 
   @SubscribeMessage('candidate')
@@ -226,7 +230,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     // console.log(`candidate send ${client.id} res ${data.socketId}`);
     this.server
       .to(data.target)
-      .emit('candidate', { candidate: data.candidate, sender: client.id });
+      .emit('candidate', {
+        candidate: data.candidate,
+        sender: client.id,
+        status: data.status,
+      });
   }
 
   @SubscribeMessage('webRTCStatus')
