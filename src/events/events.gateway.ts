@@ -73,7 +73,8 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const spaceUsers = [...this.userMap.values()].filter(
       (user) => user.spaceId === data.spaceId,
     );
-    this.server.to(data.spaceId.toString()).emit('joinSpace', spaceUsers);
+    this.server.to(data.spaceId.toString()).emit('joinSpace', userData);
+    this.server.to(client.id).emit('spaceUsers', spaceUsers);
 
     return {
       status: 'success',
@@ -89,14 +90,24 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return { status: 'error', message: 'User not found' };
     }
     const prevLayer = userData.layer;
-    this.server.to(prevLayer.toString()).emit('leaveLayer', userData);
+    this.server
+      .to(userData.spaceId + '_' + prevLayer)
+      .emit('leaveLayer', userData);
     client.leave(userData.spaceId + '_' + prevLayer);
 
-    userData.layer = data.layer;
-    this.userMap.set(client.id, userData);
-    this.server.to(data.spaceId.toString()).emit('joinLayer', userData);
+    const layerUsers = [...this.userMap.values()].filter(
+      (user) => user.spaceId === data.spaceId && user.layer === data.layer,
+    );
 
     client.join(userData.spaceId + '_' + data.layer);
+    userData.layer = data.layer;
+    this.userMap.set(client.id, userData);
+    this.server
+      .to(userData.spaceId + '_' + data.layer)
+      .emit('joinLayer', userData);
+
+    this.server.to(client.id).emit('layerUsers', layerUsers);
+
     console.log(`User ${client.id} joined layer: ${data.layer}`);
   }
 
@@ -178,46 +189,68 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('offer')
   handleWebTRCOffer(
-    @MessageBody() offer: any,
+    @MessageBody() data: any,
     @ConnectedSocket() client: Socket,
   ) {
-    const userData = this.userMap.get(client.id);
-    const spaceId = userData.spaceId;
-    const layer = userData.layer;
-
+    // this.server
+    //   .to(data.socketId)
+    //   .emit('offer', { offer: data.offer, socketId: client.id });
+    // console.log(`offer send ${client.id} res ${data.socketId}`);
     this.server
-      .to(spaceId.toString() + '_' + layer.toString())
-      .emit('offer', offer);
-    console.log(`offer`);
+      .to(data.target)
+      .emit('offer', { sdp: data.sdp, sender: client.id, status: data.status });
   }
 
   @SubscribeMessage('answer')
   handleWebTRCAnwser(
-    @MessageBody() answer: any,
+    @MessageBody() data: any,
     @ConnectedSocket() client: Socket,
   ) {
-    const userData = this.userMap.get(client.id);
-    const spaceId = userData.spaceId;
-    const layer = userData.layer;
-
+    // this.server
+    //   .to(data.socketId)
+    //   .emit('answer', { answer: data.answer, socketId: client.id });
+    // console.log(`answer send: ${client.id} res: ${data.socketId}`);
     this.server
-      .to(spaceId.toString() + '_' + layer.toString())
-      .emit('answer', answer);
-    console.log(`answer`);
+      .to(data.target)
+      .emit('answer', {
+        sdp: data.sdp,
+        sender: client.id,
+        status: data.status,
+      });
   }
 
   @SubscribeMessage('candidate')
   handleWebTRCCandidate(
-    @MessageBody() candidate: any,
+    @MessageBody() data: any,
+    @ConnectedSocket() client: Socket,
+  ) {
+    // this.server
+    //   .to(data.socketId)
+    //   .emit('candidate', { candidate: data.candidate, socketId: client.id });
+    // console.log(`candidate send ${client.id} res ${data.socketId}`);
+    this.server
+      .to(data.target)
+      .emit('candidate', {
+        candidate: data.candidate,
+        sender: client.id,
+        status: data.status,
+      });
+  }
+
+  @SubscribeMessage('webRTCStatus')
+  handleStartCamera(
+    @MessageBody() data: { type: string; status: string },
     @ConnectedSocket() client: Socket,
   ) {
     const userData = this.userMap.get(client.id);
-    const spaceId = userData.spaceId;
-    const layer = userData.layer;
-
+    if (!userData) {
+      return { status: 'error', message: 'User not found' };
+    }
+    let emit = data.type + data.status;
     this.server
-      .to(spaceId.toString() + '_' + layer.toString())
-      .emit('candidate', candidate);
-    console.log(`candidate`);
+      .to(userData.spaceId + '_' + userData.layer)
+      .emit(emit, client.id);
+
+    console.log(`User ${client.id} startCamera`);
   }
 }
