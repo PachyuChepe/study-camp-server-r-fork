@@ -152,7 +152,7 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
       const putObjectRequest: objectStorage.requests.PutObjectRequest = {
         namespaceName: this.namespace,
         bucketName: this.bucketName,
-        putObjectBody: file.buffer, // 파일 데이터를 그대로 사용합니다.
+        putObjectBody: file.buffer, // 파일 데이터를 그대로 사용
         objectName: `${folderName}/${fileName}`,
         contentLength: file.size,
         contentType: file.mimetype, // 정확한 MIME 타입 설정
@@ -178,7 +178,7 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
           name: `PAR for ${objectPath}`,
           objectName: objectPath,
           accessType: 'ObjectRead' as any, // AccessType 설정
-          timeExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24시간 후 만료
+          timeExpires: new Date(Date.now() + 24 * 60 * 60 * 1000 * 365), // 1년 후 만료
         };
 
       const createParRequest: objectStorage.requests.CreatePreauthenticatedRequestRequest =
