@@ -11,7 +11,7 @@ class CustomIoAdapter extends IoAdapter {
     const server = super.createIOServer(port, {
       ...options,
       cors: {
-        origin: [process.env.CLIENT], // 클라이언트 도메인
+        origin: [process.env.CLIENT, process.env.GITHUBPAGE], // 클라이언트 도메인
         methods: ['GET', 'POST'],
         allowedHeaders: ['Content-Type', 'Authorization'],
         credentials: true,
@@ -27,7 +27,7 @@ async function bootstrap() {
 
   // **** cors ****
   app.enableCors({
-    origin: [process.env.CLIENT], // 클라이언트 도메인
+    origin: [process.env.CLIENT, process.env.GITHUBPAGE], // 클라이언트 도메인
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: ['Content-Type', 'Authorization'],
