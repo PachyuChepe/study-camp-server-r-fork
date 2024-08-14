@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { execSync } from 'child_process';
+import moment from 'moment';
 
 @Injectable()
 export class ObjectStorageService {
@@ -134,12 +135,51 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
     file: Express.Multer.File,
   ): Promise<objectStorage.responses.PutObjectResponse> {
     try {
-      this.logger.log(`Uploading file: ${file.originalname}`);
+      const folderName = 'Study-Camp-Space-Img';
+
+      // 현재 시간을 포맷하여 파일명에 추가
+      const timestamp = moment().format('YYYY-MM-DD-HH:mm:ss');
+      const fileName = `${timestamp}-Space-${file.originalname}`;
+
+      // 폴더가 있는지 확인하는 로직
+      const listObjectsRequest: requests.ListObjectsRequest = {
+        namespaceName: this.namespace,
+        bucketName: this.bucketName,
+        prefix: folderName + '/',
+        limit: 1,
+      };
+
+      this.logger.log(`Checking if folder exists: ${folderName}`);
+      const listObjectsResponse =
+        await this.objectStorageClient.listObjects(listObjectsRequest);
+      const folderExists = listObjectsResponse.listObjects.objects.length > 0;
+
+      if (!folderExists) {
+        this.logger.log(
+          `Folder does not exist. Creating folder: ${folderName}`,
+        );
+        const createFolderRequest: requests.PutObjectRequest = {
+          namespaceName: this.namespace,
+          bucketName: this.bucketName,
+          objectName: folderName + '/', // 폴더처럼 보이도록 하기 위해 슬래시로 끝나는 이름 사용
+          putObjectBody: Buffer.alloc(0), // 빈 파일 업로드
+          contentLength: 0,
+        };
+        await this.objectStorageClient.putObject(createFolderRequest);
+        this.logger.log(`Folder created: ${folderName}`);
+      } else {
+        this.logger.log(`Folder already exists: ${folderName}`);
+      }
+
+      // 파일 업로드
+      this.logger.log(
+        `Uploading file: ${file.originalname} as ${fileName} to folder: ${folderName}`,
+      );
       const putObjectRequest: requests.PutObjectRequest = {
         namespaceName: this.namespace,
         bucketName: this.bucketName,
         putObjectBody: file.buffer,
-        objectName: file.originalname,
+        objectName: `${folderName}/${fileName}`, // 폴더 경로와 결합된 새로운 파일명
         contentLength: file.size,
         contentType: file.mimetype,
       };
@@ -147,7 +187,7 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
       this.logger.log(`PutObjectRequest: ${JSON.stringify(putObjectRequest)}`);
       const response =
         await this.objectStorageClient.putObject(putObjectRequest);
-      this.logger.log(`File uploaded successfully: ${file.originalname}`);
+      this.logger.log(`File uploaded successfully: ${fileName}`);
       return response;
     } catch (error) {
       this.logger.error('Failed to upload file to Object Storage', error);

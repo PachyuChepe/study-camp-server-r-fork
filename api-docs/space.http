@@ -96,7 +96,7 @@ Authorization: Bearer {{AccessToken}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
-Content-Disposition: form-data; name="image"; filename="image7.png"
+Content-Disposition: form-data; name="image"; filename="image10.png"
 Content-Type: image/png
 
 < ./image.png
