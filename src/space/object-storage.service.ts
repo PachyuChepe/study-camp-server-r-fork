@@ -1,8 +1,8 @@
+// object-storage.service.ts
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as common from 'oci-common';
 import * as objectStorage from 'oci-objectstorage';
-import { requests } from 'oci-objectstorage';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -19,9 +19,9 @@ export class ObjectStorageService {
   constructor(private configService: ConfigService) {
     try {
       // .env 파일에서 가져온 구성 파일 경로
-      const configFilePath = this.configService.get<string>('OCI_CONFIG_PATH');
+      const configFilePath = this.configService.get<string>('OCI_CONFIG_FILE');
       if (!configFilePath) {
-        throw new Error('OCI_CONFIG_PATH is not defined in .env file');
+        throw new Error('OCI_CONFIG_FILE is not defined in .env file');
       }
 
       // 디렉터리 생성
@@ -131,67 +131,74 @@ key_file=${this.configService.get<string>('OCI_KEY_FILE')}`;
     }
   }
 
-  async uploadFile(
-    file: Express.Multer.File,
-  ): Promise<objectStorage.responses.PutObjectResponse> {
+  async uploadFile(file: Express.Multer.File): Promise<string> {
     try {
       const folderName = 'Study-Camp-Space-Img';
-
-      // 현재 시간을 포맷하여 파일명에 추가
       const timestamp = moment().format('YYYY-MM-DD-HH:mm:ss');
       const fileName = `${timestamp}-Space-${file.originalname}`;
 
-      // 폴더가 있는지 확인하는 로직
-      const listObjectsRequest: requests.ListObjectsRequest = {
-        namespaceName: this.namespace,
-        bucketName: this.bucketName,
-        prefix: folderName + '/',
-        limit: 1,
-      };
-
-      this.logger.log(`Checking if folder exists: ${folderName}`);
-      const listObjectsResponse =
-        await this.objectStorageClient.listObjects(listObjectsRequest);
-      const folderExists = listObjectsResponse.listObjects.objects.length > 0;
-
-      if (!folderExists) {
-        this.logger.log(
-          `Folder does not exist. Creating folder: ${folderName}`,
-        );
-        const createFolderRequest: requests.PutObjectRequest = {
-          namespaceName: this.namespace,
-          bucketName: this.bucketName,
-          objectName: folderName + '/', // 폴더처럼 보이도록 하기 위해 슬래시로 끝나는 이름 사용
-          putObjectBody: Buffer.alloc(0), // 빈 파일 업로드
-          contentLength: 0,
-        };
-        await this.objectStorageClient.putObject(createFolderRequest);
-        this.logger.log(`Folder created: ${folderName}`);
-      } else {
-        this.logger.log(`Folder already exists: ${folderName}`);
-      }
-
-      // 파일 업로드
       this.logger.log(
         `Uploading file: ${file.originalname} as ${fileName} to folder: ${folderName}`,
       );
-      const putObjectRequest: requests.PutObjectRequest = {
+
+      // 파일 버퍼의 길이를 로그로 출력하여 확인
+      this.logger.log(`File buffer length: ${file.buffer.length}`);
+
+      // 버퍼 내용 일부를 로그로 출력 (예: 앞 20바이트)
+      this.logger.log(
+        `File buffer content preview: ${file.buffer.slice(0, 20).toString('hex')}`,
+      );
+
+      const putObjectRequest: objectStorage.requests.PutObjectRequest = {
         namespaceName: this.namespace,
         bucketName: this.bucketName,
-        putObjectBody: file.buffer,
-        objectName: `${folderName}/${fileName}`, // 폴더 경로와 결합된 새로운 파일명
+        putObjectBody: file.buffer, // 파일 데이터를 그대로 사용합니다.
+        objectName: `${folderName}/${fileName}`,
         contentLength: file.size,
-        contentType: file.mimetype,
+        contentType: file.mimetype, // 정확한 MIME 타입 설정
       };
 
-      this.logger.log(`PutObjectRequest: ${JSON.stringify(putObjectRequest)}`);
       const response =
         await this.objectStorageClient.putObject(putObjectRequest);
       this.logger.log(`File uploaded successfully: ${fileName}`);
-      return response;
+
+      return `${folderName}/${fileName}`; // 저장된 파일 경로를 반환
     } catch (error) {
       this.logger.error('Failed to upload file to Object Storage', error);
-      this.logger.error(`Error Details: ${error.message}`);
+      throw error;
+    }
+  }
+
+  public async createPAR(objectName: string): Promise<string> {
+    try {
+      const objectPath = objectName; // 업로드된 파일의 경로
+
+      const parDetails: objectStorage.models.CreatePreauthenticatedRequestDetails =
+        {
+          name: `PAR for ${objectPath}`,
+          objectName: objectPath,
+          accessType: 'ObjectRead' as any, // AccessType 설정
+          timeExpires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24시간 후 만료
+        };
+
+      const createParRequest: objectStorage.requests.CreatePreauthenticatedRequestRequest =
+        {
+          namespaceName: this.namespace,
+          bucketName: this.bucketName,
+          createPreauthenticatedRequestDetails: parDetails,
+        };
+
+      const createParResponse =
+        await this.objectStorageClient.createPreauthenticatedRequest(
+          createParRequest,
+        );
+
+      const parUrl = `https://objectstorage.${this.configService.get<string>('OCI_REGION')}.oraclecloud.com${createParResponse.preauthenticatedRequest.accessUri}`;
+      this.logger.log(`PAR URL created: ${parUrl}`);
+
+      return parUrl;
+    } catch (error) {
+      this.logger.error('Failed to create PAR URL', error);
       throw error;
     }
   }

@@ -1,3 +1,4 @@
+// space.controller.ts
 import {
   Controller,
   Get,
@@ -10,6 +11,10 @@ import {
   ValidationPipe,
   Req,
   UsePipes,
+  UploadedFile,
+  UseInterceptors,
+  Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import { SpaceService } from './space.service';
 import { CreateSpaceDto } from './dto/create-space.dto';
@@ -17,22 +22,66 @@ import { UpdateSpaceDto } from './dto/update-space.dto';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { AuthGuard } from '@nestjs/passport';
 import { GuestAuthGuard } from 'src/auth/guard/guest-auth.guard';
+import { ObjectStorageService } from './object-storage.service';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Express } from 'express';
 
 @Controller('space')
 export class SpaceController {
-  constructor(private readonly spaceService: SpaceService) {}
+  private readonly logger = new Logger(SpaceController.name);
 
-  @UseGuards(AuthGuard('jwt'), JwtAuthGuard)
+  constructor(
+    private readonly spaceService: SpaceService,
+    private readonly objectStorageService: ObjectStorageService, // ObjectStorageService 주입
+  ) {}
+  @UseGuards(AuthGuard('jwt'))
   @Post()
   @UsePipes(ValidationPipe)
-  async createSpace(@Req() req, @Body() createSpaceDto: CreateSpaceDto) {
+  @UseInterceptors(
+    FileInterceptor('image', {
+      limits: { fileSize: 5 * 1024 * 1024 }, // 파일 크기 제한 (5MB)
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/\/(jpg|jpeg|png)$/)) {
+          return cb(
+            new BadRequestException('이미지 파일만 업로드할 수 있습니다.'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  async createSpace(
+    @Req() req,
+    @Body() createSpaceDto: CreateSpaceDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     const userId = req.user.id;
 
+    let imageUrl = '';
+    if (file) {
+      this.logger.log(`Uploading image: ${file.originalname}`);
+      const objectName = await this.objectStorageService.uploadFile(file);
+
+      imageUrl = await this.objectStorageService.createPAR(objectName);
+    }
+
+    if (typeof imageUrl !== 'string') {
+      throw new BadRequestException('PAR URL 생성에 실패했습니다.');
+    }
+
+    const newSpaceDto = {
+      ...createSpaceDto,
+      image_url: imageUrl,
+    };
+
+    this.logger.log(`Final image_url: ${newSpaceDto.image_url}`);
+
     return await this.spaceService.createSpace(
-      createSpaceDto.name,
-      createSpaceDto.content,
-      createSpaceDto.password,
-      createSpaceDto.image_url,
+      newSpaceDto.name,
+      newSpaceDto.content,
+      newSpaceDto.password,
+      newSpaceDto.image_url,
       userId,
     );
   }
