@@ -24,6 +24,7 @@ export class SpaceMemberService {
       const exMember = await this.findExistSpaceMember(userId, spaceId);
 
       if (exMember) {
+        return exMember;
         throw new BadRequestException('이미 스페이스 멤버입니다.');
       }
 

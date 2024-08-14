@@ -25,7 +25,7 @@ POST {{domain}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "user2@gmail.com",
+  "email": "user@gmail.com",
   "password": "1234"
 }
 
@@ -48,13 +48,23 @@ Authorization: Bearer {{AccessToken}}
 Content-Type: application/json
 
 {
-  "password": "123qweQWE!",
-  "hair": 2,
-  "face": 3,
-  "clothes": 4,
+  "skin": 5,
+  "hair": 5,
+  "face": 5,
+  "clothes": 5,
   "hair_color": 5,
-  "clothes_color": 6
+  "clothes_color": 5
 }
+###
+# 사용자 정보 업데이트
+PATCH {{domain}}/user/nick
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+{
+  "nickName" : "닉네임123"
+}
+
 
 ### 
 # 사용자 삭제

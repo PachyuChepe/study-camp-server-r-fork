@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserSkinDto } from './dto/update-user-skin.dto';
 import { AuthGuard } from '@nestjs/passport';
 import { JwtAuthGuard } from 'src/auth/guard/jwt-auth.guard';
 import { RedisService } from 'src/redis/redis.service';
@@ -46,11 +46,19 @@ export class UserController {
     return this.userService.findOne(email);
   }
 
-  @Patch()
+  @Patch('')
   @UseGuards(AuthGuard('jwt'), JwtAuthGuard)
-  async updateProfile(@Req() req, @Body() updateUserDto: UpdateUserDto) {
+  async updateSkin(@Req() req, @Body() updateUserDto: UpdateUserSkinDto) {
     await this.userService.update(req.user.id, updateUserDto);
-    return { message: '회원 정보가 업데이트되었습니다.' };
+    return { message: '회원 스킨 정보가 업데이트되었습니다.' };
+  }
+
+  @Patch('/nick')
+  @UseGuards(AuthGuard('jwt'), JwtAuthGuard)
+  async updateNick(@Req() req, @Body() body: { nickName: string }) {
+    const nickName = body.nickName;
+    await this.userService.updateNickName(req.user.id, nickName);
+    return { message: '회원 닉네임 정보가 업데이트되었습니다.' };
   }
 
   @Delete()

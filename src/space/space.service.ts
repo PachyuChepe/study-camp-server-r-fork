@@ -36,18 +36,11 @@ export class SpaceService {
         throw new BadRequestException('해당하는 방이 이미 존재합니다.');
       }
 
-      const numbers = '0123456789';
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let url = '';
-
-      for (let i = 0; i < 10; i++) {
-        url += numbers.charAt(Math.floor(Math.random() * numbers.length));
+      for (let i = 0; i < 20; i++) {
         url += characters.charAt(Math.floor(Math.random() * characters.length));
       }
-
-      // for (let i = 10; i < 20; i++) {
-      //   url += characters.charAt(Math.floor(Math.random() * characters.length));
-      // }
 
       let newSpace = this.spaceRepository.create({
         name,
@@ -207,18 +200,14 @@ export class SpaceService {
   // 초대 코드 생성
   async createInvitngCode(spaceId: number, userId: number) {
     try {
-      const numbers = '0123456789';
-      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       let result = '';
 
-      for (let i = 0; i < 3; i++) {
-        result += numbers.charAt(Math.floor(Math.random() * numbers.length));
+      for (let i = 0; i < 6; i++) {
         result += characters.charAt(
           Math.floor(Math.random() * characters.length),
         );
       }
-
-      // for (let i = 3; i < 6; i++) {}
 
       result = result
         .split('')
@@ -244,17 +233,6 @@ export class SpaceService {
         relations: ['spaceMembers'],
       });
 
-      if (!!userId) {
-        let member = await this.spaceMemberService.findExistSpaceMember(
-          userId,
-          +spaceId,
-        );
-        if (!member) {
-          // 스페이스 멤버 등록
-          member = await this.spaceMemberService.create(userId, +spaceId);
-        }
-      }
-
       return { id: space.id, url: space.url };
     } catch (error) {
       throw error;
@@ -268,40 +246,27 @@ export class SpaceService {
         where: { id: spaceId },
       });
 
-      // console.log('checkPassword', space);
-
       if (!space) {
         throw new NotFoundException('해당 스페이스가 없음');
       }
 
-      // console.log('checkPassword', !!userId);
       // 유저가 이미 멤버이면 입장
       if (!!userId) {
         let member = await this.spaceMemberService.findExistSpaceMember(
           +userId,
           +spaceId,
         );
-        if (member)
-          return { user_id: userId, member_id: member.id, url: space.url };
+        if (member) return { url: space.url };
       }
 
-      // console.log('checkPassword', space.password, password);
       if (space.password == password) {
-        if (!!userId) {
-          let member = await this.spaceMemberService.create(userId, +spaceId);
-
-          return { user_id: userId, member_id: member.id, url: space.url };
-        } else {
-          return { user_id: null, member_id: null, url: space.url };
-        }
-        return true;
+        return { url: space.url };
       } else {
         throw new BadRequestException('비밀번호가 맞지 않습니다.');
       }
-
-      return false;
     } catch (error) {
       throw new ConflictException('서버 에러 checkPassword');
+      return false;
     }
   }
 }

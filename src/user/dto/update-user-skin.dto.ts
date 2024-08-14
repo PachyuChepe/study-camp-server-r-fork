@@ -2,7 +2,7 @@ import { PartialType } from '@nestjs/swagger';
 import { CreateUserDto } from './create-user.dto';
 import { IsNumber } from 'class-validator';
 
-export class UpdateUserDto extends PartialType(CreateUserDto) {
+export class UpdateUserSkinDto extends PartialType(CreateUserDto) {
   @IsNumber()
   skin: number;
   @IsNumber()

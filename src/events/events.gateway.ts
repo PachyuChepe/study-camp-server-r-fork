@@ -108,7 +108,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     this.server.to(client.id).emit('layerUsers', layerUsers);
 
-    console.log(`User ${client.id} joined layer: ${data.layer}`);
+    // console.log(`User ${client.id} joined layer: ${data.layer}`);
   }
 
   @SubscribeMessage('leaveSpace')
@@ -123,7 +123,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       .to(userData.spaceId + '_' + data.layer)
       .emit('leaveLayer', userData);
 
-    console.log(`User ${client.id} left space: ${userData.spaceId}`);
+    // console.log(`User ${client.id} left space: ${userData.spaceId}`);
   }
 
   @SubscribeMessage('sendSpaceMessage')
@@ -142,9 +142,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server
       .to(spaceId.toString())
       .emit('spaceMessage', { nickName, message });
-    console.log(
-      `spaceId : ${spaceId} nickName : ${nickName} spaceMessage: ${message}`,
-    );
+    // console.log(
+    //   `spaceId : ${spaceId} nickName : ${nickName} spaceMessage: ${message}`,
+    // );
   }
 
   @SubscribeMessage('sendLayerMessage')
@@ -164,9 +164,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server
       .to(spaceId + '_' + layer)
       .emit('layerMessage', { nickName, message });
-    console.log(
-      `spaceId : ${spaceId} layer : ${layer} nickName : ${nickName} spaceMessage: ${message}`,
-    );
+    // console.log(
+    //   `spaceId : ${spaceId} layer : ${layer} nickName : ${nickName} spaceMessage: ${message}`,
+    // );
   }
 
   @SubscribeMessage('movePlayer')
@@ -184,7 +184,46 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.userMap.set(client.id, userData);
 
     this.server.to(spaceId.toString()).emit('movePlayer', userData);
-    console.log(`movePlayer: ${userData.x}_${userData.y}`);
+    // console.log(`movePlayer: ${userData.x}_${userData.y}`);
+  }
+
+  @SubscribeMessage('changeSkin')
+  handleChangeSkin(
+    @MessageBody() data: any,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const userData = this.userMap.get(client.id);
+    if (!userData) {
+      return { status: 'error', message: 'User not found' };
+    }
+    const spaceId = userData.spaceId;
+    userData.skin = data.skin;
+    userData.face = data.face;
+    userData.hair = data.hair;
+    userData.hair_color = data.hair_color;
+    userData.clothes = data.clothes;
+    userData.clothes_color = data.clothes_color;
+    this.userMap.set(client.id, userData);
+
+    this.server.to(spaceId.toString()).emit('changeSkin', userData);
+    // console.log(`changeSkin: ${userData.id}`);
+  }
+
+  @SubscribeMessage('changeNickName')
+  handleChangeNickName(
+    @MessageBody() data: any,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const userData = this.userMap.get(client.id);
+    if (!userData) {
+      return { status: 'error', message: 'User not found' };
+    }
+    const spaceId = userData.spaceId;
+    userData.nickName = data.nickName;
+    this.userMap.set(client.id, userData);
+
+    this.server.to(spaceId.toString()).emit('changeNickName', userData);
+    // console.log(`changeSkin: ${userData.nickName}`);
   }
 
   @SubscribeMessage('offer')
@@ -210,13 +249,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     //   .to(data.socketId)
     //   .emit('answer', { answer: data.answer, socketId: client.id });
     // console.log(`answer send: ${client.id} res: ${data.socketId}`);
-    this.server
-      .to(data.target)
-      .emit('answer', {
-        sdp: data.sdp,
-        sender: client.id,
-        status: data.status,
-      });
+    this.server.to(data.target).emit('answer', {
+      sdp: data.sdp,
+      sender: client.id,
+      status: data.status,
+    });
   }
 
   @SubscribeMessage('candidate')
@@ -228,13 +265,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     //   .to(data.socketId)
     //   .emit('candidate', { candidate: data.candidate, socketId: client.id });
     // console.log(`candidate send ${client.id} res ${data.socketId}`);
-    this.server
-      .to(data.target)
-      .emit('candidate', {
-        candidate: data.candidate,
-        sender: client.id,
-        status: data.status,
-      });
+    this.server.to(data.target).emit('candidate', {
+      candidate: data.candidate,
+      sender: client.id,
+      status: data.status,
+    });
   }
 
   @SubscribeMessage('webRTCStatus')
@@ -250,7 +285,5 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server
       .to(userData.spaceId + '_' + userData.layer)
       .emit(emit, client.id);
-
-    console.log(`User ${client.id} startCamera`);
   }
 }

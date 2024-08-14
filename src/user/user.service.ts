@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserSkinDto } from './dto/update-user-skin.dto';
 import { User } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -107,7 +107,7 @@ export class UserService {
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: number, updateUserDto: UpdateUserSkinDto) {
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
       throw new NotFoundException(`ID가 ${id}인 사용자를 찾을 수 없습니다.`);
@@ -156,6 +156,23 @@ export class UserService {
     }
 
     await this.userRepository.save({ ...user, ...updateUserDto });
+  }
+
+  async updateNickName(id: number, nickname: string) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`ID가 ${id}인 사용자를 찾을 수 없습니다.`);
+    }
+
+    const nickUser = await this.userRepository.findOne({
+      where: { nick_name: nickname },
+    });
+    if (nickUser) {
+      throw new NotFoundException(`이미 사용중인 닉네임 입니다.`);
+    }
+    user.nick_name = nickname;
+
+    await this.userRepository.save(user);
   }
 
   async remove(id: number) {
