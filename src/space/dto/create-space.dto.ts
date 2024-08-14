@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsNotEmpty, IsNumber, IsString, IsOptional } from 'class-validator';
 
 export class CreateSpaceDto {
   @IsNotEmpty()
@@ -11,6 +11,7 @@ export class CreateSpaceDto {
   @IsString()
   readonly content: string;
 
+  @IsOptional()
   @IsString()
-  readonly image_url: string;
+  image_url?: string;
 }
