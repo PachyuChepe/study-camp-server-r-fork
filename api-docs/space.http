@@ -87,7 +87,7 @@ Content-Type: application/json
 
 ###
 # 초대 코드 생성
-GET {{domain}}/space/invitation/2
+GET {{domain}}/space/invitation/1
 Authorization: Bearer {{AccessToken}}
 
 ###
@@ -97,7 +97,7 @@ Authorization: Bearer {{AccessToken}}
 Content-Type: application/json
 
 {
-  "code": "635KG5"
+  "code": "L83PT2"
 }
 
 

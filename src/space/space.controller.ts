@@ -86,9 +86,11 @@ export class SpaceController {
     );
   }
 
+  @UseGuards(GuestAuthGuard)
   @Get()
-  async findAll() {
-    return await this.spaceService.findAll();
+  async findAll(@Req() req) {
+    const userId = req.user ? req.user.id : 0;
+    return await this.spaceService.findAll(userId);
   }
 
   @Get(':id')
@@ -117,7 +119,7 @@ export class SpaceController {
   }
 
   // 초대 코드 생성
-  @UseGuards(AuthGuard('jwt'), JwtAuthGuard)
+  @UseGuards(GuestAuthGuard)
   @Get('/invitation/:spaceId')
   async createInvitngCode(@Param('spaceId') spaceId: string, @Req() req) {
     const data = await this.spaceService.createInvitngCode(
