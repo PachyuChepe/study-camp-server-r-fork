@@ -4,6 +4,7 @@ import {
   Post,
   UseGuards,
   Request,
+  Response,
   Req,
   UnauthorizedException,
   ConflictException,
@@ -11,10 +12,9 @@ import {
   Res,
   Param,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
-
 import { RedisService } from '../redis/redis.service';
-
 import { AuthService } from './auth.service';
 import { VerifyEmailDto } from '../auth/dto/verify-email.dto';
 import { LocalAuthGuard } from './guard/local-auth.guard';
@@ -27,6 +27,7 @@ export class AuthController {
     private authService: AuthService,
     private redisService: RedisService,
     private userService: UserService,
+    private configService: ConfigService,
   ) {}
 
   @Post('/login')
@@ -119,16 +120,10 @@ export class AuthController {
       // member_spaces: memberSpaces,
       // member_search: memberSearch,
     });
-
-    // 클라이언트에게 인증 완료 신호 전송 (예: JavaScript 함수 호출)
-    const script = `<script>
-                      window.opener.postMessage({
-                        type: 'auth-complete',
-                        data: { userId: '${user.id}' }
-                      }, '*');
-                      window.close();
-                    </script>`;
-    res.send(script);
+    const redirectUrl = this.configService.get<string>('CLIENT');
+    res.redirect(
+      `${redirectUrl}/auth/callback?access_token=${accessToken}&provider=google`,
+    );
   }
 
   @Get('/kakao')
@@ -150,15 +145,10 @@ export class AuthController {
       // member_search: user,
     });
 
-    // 클라이언트에게 인증 완료 신호 전송 (예: JavaScript 함수 호출)
-    const script = `<script>
-                      window.opener.postMessage({
-                        type: 'auth-complete',
-                        data: { userId: '${user.id}' }
-                      }, '*');
-                      window.close();
-                    </script>`;
-    res.send(script);
+    const redirectUrl = this.configService.get<string>('CLIENT');
+    res.redirect(
+      `${redirectUrl}/auth/callback?access_token=${accessToken}&provider=kakao`,
+    );
   }
 
   @Get('/stream/:userId')
