@@ -63,21 +63,19 @@ export class SpaceService {
 
   async findAll(userId: number) {
     try {
-      // console.log('findAll', userId);
       const spaces = await this.spaceRepository.find({
         // select: ['id', 'user_id', 'content', 'name', 'image_url'],
         relations: ['spaceMembers'],
       });
-      const filteredSpaces = !!userId
-        ? spaces.filter((space) => {
-            // console.log('findAll space m', space.spaceMembers);
 
-            space.spaceMembers.some((member) => {
-              // console.log('findAll m', member.user_id);
-              member.user_id == userId;
-            });
-          })
-        : spaces;
+      const filteredSpaces =
+        userId != 0
+          ? spaces.filter((space) => {
+              return !space.spaceMembers.some((member) => {
+                return member.user_id === userId;
+              });
+            })
+          : spaces;
 
       return filteredSpaces.map((space) => ({
         id: space.id,

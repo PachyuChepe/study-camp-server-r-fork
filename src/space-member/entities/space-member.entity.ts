@@ -8,11 +8,13 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   DeleteDateColumn,
+  Unique,
 } from 'typeorm';
 import { User } from 'src/user/entities/user.entity';
 import { Space } from 'src/space/entities/space.entity';
 
 @Entity('space_members')
+@Unique(['user_id', 'space_id'])
 export class SpaceMember {
   @PrimaryGeneratedColumn()
   id: number;

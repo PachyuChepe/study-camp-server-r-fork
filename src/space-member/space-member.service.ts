@@ -23,15 +23,17 @@ export class SpaceMemberService {
     try {
       const exMember = await this.findExistSpaceMember(userId, spaceId);
 
+      console.log('SpaceMember create', exMember);
       if (exMember) {
         return exMember;
         throw new BadRequestException('이미 스페이스 멤버입니다.');
       }
 
-      let newMember = this.spaceMemberRepository.create({
+      let newMember = await this.spaceMemberRepository.create({
         user_id: userId,
         space_id: spaceId,
       });
+      console.log('SpaceMember create', newMember);
       newMember = await this.spaceMemberRepository.save(newMember);
 
       return newMember;

@@ -21,11 +21,11 @@ export class SpaceMemberController {
 
   @UseGuards(AuthGuard('jwt'), JwtAuthGuard)
   @Post()
-  async create(@Body() createSpaceMemberDto: CreateSpaceMemberDto) {
-    return this.spaceMemberService.create(
-      createSpaceMemberDto.user_id,
-      createSpaceMemberDto.space_id,
-    );
+  async create(@Body() body, @Req() req) {
+    const userId = req.user.id;
+    const spaceId = body.spaceId;
+
+    return this.spaceMemberService.create(+userId, +spaceId);
   }
 
   @UseGuards(AuthGuard('jwt'), JwtAuthGuard)

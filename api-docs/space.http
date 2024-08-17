@@ -8,7 +8,7 @@ POST {{domain}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "user@gmail.com",
+  "email": "user2@gmail.com",
   "password": "1234"
 }
 
@@ -68,6 +68,7 @@ Authorization: Bearer {{AccessToken}}
 
 
 
+
 ###
 # 로그인유저가 참여한 학습공간
 GET {{domain}}/space-member/user
@@ -113,3 +114,14 @@ Content-Type: image/png
 
 < ./image.png
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+
+###
+# 학습공간 멤버 조회
+Post {{domain}}/space-member
+Authorization: Bearer {{AccessToken}}
+Content-Type: application/json
+
+{
+  "spaceId": 1
+}
