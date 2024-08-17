@@ -1,5 +1,10 @@
 # STUDY CAMP Back-end
 
+프론트엔드 깃주소
+[Front-end github](https://github.com/dainK/study-camp-client)<br>
+배포 사이트 주소
+[https://www.studycamp.site](https://www.studycamp.site/)
+
 ## Development environment
 
 <div align=left>
@@ -20,33 +25,33 @@
 
 ## 구현 기능
 
-# Authorization
+### Authorization
 
-- [ ] 로그인 (로컬 로그인, 구글 로그인, 카카오 로그인)
+- [x] 로그인 (로컬 로그인, 구글 로그인, 카카오 로그인)
 - [x] 로그인 토큰 관리 (레디스 이용)
 - [x] 로그아웃
 
-# Guard
+### Guard
 
 - [x] 토큰 유효성 검사
 
-# User
+### User
 
 - [x] 회원 가입
 - [x] 정보 변경
 
-# Space
+### Space
 
 - [x] 스페이스 생성 (이미지 저장소 Oracle Cloud Infrastructure(OCI))
 - [x] 스페이스 목록 조회
 - [x] 스페이스 패스워드 체크
 - [x] 초대코드 생성 및 입장 (레디스 이용)
 
-# Space Member
+### Space Member
 
 - [x] 스페이스 가입
 - [x] 가입한 스페이스 목록 조회
 
-# Web Socket
+### Web Socket
 
 - [x] Front와의 통신 연결 (socket.io, WebRTC)
